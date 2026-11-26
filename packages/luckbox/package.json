@@ -1,6 +1,6 @@
 {
   "name": "luckbox",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "Seeded, replayable randomness for games: dice notation with exact odds, loot tables with gacha pity and real drop rates, weighted picks, shuffle bags, decks, bell curves, Poisson-disk scatter, simplex noise and daily challenges. Same seed, same results, on every device. Zero dependencies.",
   "keywords": [
     "random",

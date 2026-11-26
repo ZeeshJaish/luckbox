@@ -31,7 +31,7 @@ npm install luckbox
 Single-file HTML game? Use one script tag. Everything, add-ons included, is on `window.luckbox`:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/luckbox@0.5"></script>
+<script src="https://cdn.jsdelivr.net/npm/luckbox@1"></script>
 <script>
   const rng = luckbox.luck('my-seed')
   console.log(rng.roll('2d6'))
@@ -41,7 +41,7 @@ Single-file HTML game? Use one script tag. Everything, add-ons included, is on `
 Or import it straight from a CDN:
 
 ```javascript
-import { luck } from 'https://cdn.jsdelivr.net/npm/luckbox@0.5/+esm'
+import { luck } from 'https://cdn.jsdelivr.net/npm/luckbox@1/+esm'
 ```
 
 ## Try it without writing code
@@ -438,7 +438,7 @@ luckbox: loot(): put pity in the second argument: rng.loot(table, { pity: ... })
 
 **Is it secure enough for passwords or real-money gambling?** No. Seeded randomness can be predicted by anyone who knows the seed. For secrets, use `crypto.getRandomValues()`.
 
-**Will my seeds give different results after I update luckbox?** No. Every result is locked by tests, and a change to any seeded result counts as a breaking bug.
+**Will my seeds give different results after I update luckbox?** No. Every result is locked by tests (some since 0.1.0), and a change to any seeded result counts as a bug, in every version. From 1.0.0 the API also follows semantic versioning.
 
 **Where does it run?** Everywhere modern JavaScript runs: browsers, Node 20+, Bun, Deno and web workers. It's tested on Node 20, 22 and 24, Bun, Deno, Chrome, Firefox and Safari's engine. It has no dependencies and doesn't even need `TextEncoder`.
 

@@ -5,7 +5,7 @@ export const SITE = {
   tagline: 'Seeded random for games, that you can replay',
   description:
     'luckbox is a seeded random number generator for JavaScript and TypeScript games. The same seed gives the same results everywhere, with dice notation, loot tables with gacha pity, weighted picks, shuffle bags, noise and daily challenges built in.',
-  cdn: 'https://cdn.jsdelivr.net/npm/luckbox@0',
+  cdn: 'https://cdn.jsdelivr.net/npm/luckbox@1',
 }
 
 export const PROMPT = `Use the npm package "luckbox" for all randomness in this game (never Math.random for gameplay).
@@ -260,13 +260,13 @@ onKeyPress('space', () => {
     color: 'coral',
     title: 'A daily map in one HTML file',
     summary: 'No build step: one script tag, a daily seed shared by every player, and a noise map drawn on a canvas.',
-    install: '<script src="https://cdn.jsdelivr.net/npm/luckbox@0"></script>',
+    install: '<script src="https://cdn.jsdelivr.net/npm/luckbox@1"></script>',
     lang: 'html',
     code: `<!doctype html>
 <title>Daily map</title>
 <h1 id="title"></h1>
 <canvas id="map" width="320" height="200" style="width: 640px; image-rendering: pixelated"></canvas>
-<script src="https://cdn.jsdelivr.net/npm/luckbox@0"></script>
+<script src="https://cdn.jsdelivr.net/npm/luckbox@1"></script>
 <script>
   const { luck, createNoise } = luckbox
   // Every player in the world gets the same map today

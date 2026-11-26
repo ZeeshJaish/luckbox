@@ -19,7 +19,7 @@ import { createNoise } from 'luckbox/noise'       // simplex noise for terrain a
 import { seedrandom } from 'luckbox/seedrandom'   // drop-in replacement for the seedrandom package
 ```
 
-Script tag (single HTML file): `<script src="https://cdn.jsdelivr.net/npm/luckbox@0"></script>`, then `luckbox.luck(...)`, `luckbox.createNoise(...)`, `luckbox.seedrandom(...)`.
+Script tag (single HTML file): `<script src="https://cdn.jsdelivr.net/npm/luckbox@1"></script>`, then `luckbox.luck(...)`, `luckbox.createNoise(...)`, `luckbox.seedrandom(...)`.
 
 ## API
 

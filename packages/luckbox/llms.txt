@@ -2,7 +2,7 @@
 
 > Seeded, replayable randomness for JavaScript and TypeScript games. The same seed gives the same results on every device and in every version. It includes dice notation with exact odds, loot tables with gacha-style pity and real drop rates, weighted picks, shuffle bags, card decks, streak-free crits, bell curves, Poisson-disk scatter, simplex noise and daily challenges. Zero dependencies, about 14 KB, MIT licence. A maintained replacement for the `seedrandom` package (`luckbox/seedrandom` gives the same numbers).
 
-Install: `npm install luckbox`. Import: `import { luck } from 'luckbox'`. Script tag: `https://cdn.jsdelivr.net/npm/luckbox@0`, exposed as `window.luckbox`.
+Install: `npm install luckbox`. Import: `import { luck } from 'luckbox'`. Script tag: `https://cdn.jsdelivr.net/npm/luckbox@1`, exposed as `window.luckbox`.
 
 Core idea: `const rng = luck('seed')`, then `rng.int(1, 6)`, `rng.pick(list)`, `rng.roll('4d6kh3')`, `rng.weighted({ gold: 70, gem: 30 })`, `rng.loot(table, { pity })`. Use `rng.fork('name')` for independent streams, and `rng.state()` / `luck.from(state)` to save and load.
 

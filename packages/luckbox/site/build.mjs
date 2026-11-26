@@ -232,7 +232,7 @@ writeFileSync(join(out, 'compare.html'), compare)
 // The playground loads the published package from the CDN on the live site.
 const playground = readFileSync(join(pkgDir, 'playground/index.html'), 'utf8').replace(
   "local.src = '../dist/luckbox.min.js'",
-  "local.src = 'https://cdn.jsdelivr.net/npm/luckbox@0/dist/luckbox.min.js'",
+  "local.src = 'https://cdn.jsdelivr.net/npm/luckbox@1/dist/luckbox.min.js'",
 )
 writeFileSync(join(out, 'playground/index.html'), playground)
 

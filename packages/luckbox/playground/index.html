@@ -230,7 +230,7 @@
     local.onload = next
     local.onerror = () => {
       const cdn = document.createElement('script')
-      cdn.src = 'https://cdn.jsdelivr.net/npm/luckbox@0/dist/luckbox.min.js'
+      cdn.src = 'https://cdn.jsdelivr.net/npm/luckbox@1/dist/luckbox.min.js'
       cdn.onload = next
       document.head.appendChild(cdn)
     }

@@ -2,6 +2,14 @@
 
 All notable changes to luckbox are listed here. This project follows [Semantic Versioning](https://semver.org).
 
+## 1.0.0 (2026-11-27)
+
+The first stable release. From now on luckbox follows semantic versioning:
+
+- **The API is stable.** Breaking changes only come with a new major version.
+- **Seeded results never change**, even across major versions. Every release is tested against results locked since 0.1.0, and any change to a seeded result counts as a bug.
+- CDN links now use `luckbox@1`.
+
 ## 0.5.0 (2026-11-27)
 
 Easy for people and AI tools to find and use correctly.

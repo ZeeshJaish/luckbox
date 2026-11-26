@@ -32,4 +32,4 @@ export { LuckboxError } from './errors.ts'
 export type { LuckboxErrorCode } from './errors.ts'
 
 /** The installed luckbox version. */
-export const VERSION: string = '0.5.0'
+export const VERSION: string = '1.0.0'
