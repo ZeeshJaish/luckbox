@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Tests, types, size and package checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check --workspace luckbox
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: packages/luckbox/dist
+
+  node-versions:
+    name: Runs on Node ${{ matrix.node }}
+    needs: check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: packages/luckbox/dist
+      - name: Same results as Node 24
+        working-directory: packages/luckbox
+        run: node test/cross/check-runtime.mjs
+      - name: The CLI works
+        working-directory: packages/luckbox
+        run: node dist/cli.mjs roll 4d6kh3 --times 3 --seed ci && node dist/cli.mjs odds 2d6
+
+  same-everywhere:
+    name: Same results in Bun, Deno, Chrome, Firefox and WebKit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm ci
+      - run: npx playwright install --with-deps firefox webkit
+      - run: npm run test:cross --workspace luckbox
+        env:
+          STRICT_BROWSERS: '1'

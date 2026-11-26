@@ -5,3 +5,7 @@ coverage/
 .DS_Store
 tools/runtimes/
 packages/luckbox/site/out/
+
+# Private planning files (kept off GitHub)
+/PLAN.md
+/docs/

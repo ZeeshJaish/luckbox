@@ -11,7 +11,7 @@ const out = join(here, 'out')
 const pkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8'))
 const BASE = (process.env.SITE_URL ?? 'https://zeeshjaish.github.io/luckbox/').replace(/\/?$/, '/')
 const NPM = 'https://www.npmjs.com/package/luckbox'
-const REPO = process.env.REPO_URL ?? ''
+const REPO = process.env.REPO_URL ?? 'https://github.com/ZeeshJaish/luckbox'
 
 const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 

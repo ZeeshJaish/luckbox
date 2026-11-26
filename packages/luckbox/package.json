@@ -43,6 +43,15 @@
     "gacha pity",
     "drop rates"
   ],
+  "homepage": "https://zeeshjaish.github.io/luckbox/",
+  "bugs": {
+    "url": "https://github.com/ZeeshJaish/luckbox/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZeeshJaish/luckbox.git",
+    "directory": "packages/luckbox"
+  },
   "license": "MIT",
   "author": "Zedbury Studios",
   "type": "module",
