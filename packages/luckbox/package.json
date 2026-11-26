@@ -1,0 +1,78 @@
+{
+  "name": "luckbox",
+  "version": "0.0.0",
+  "description": "Seeded, replayable randomness for games: dice notation, loot tables with pity, gacha odds, shuffle bags, daily challenges. Same seed, same results, on every device. Zero dependencies.",
+  "keywords": [
+    "random",
+    "seeded random",
+    "seedrandom",
+    "prng",
+    "rng",
+    "deterministic",
+    "game",
+    "gamedev",
+    "dice",
+    "loot table",
+    "gacha",
+    "daily challenge",
+    "procedural generation",
+    "phaser",
+    "pixi",
+    "threejs",
+    "kaplay"
+  ],
+  "license": "MIT",
+  "author": "Zedbury Studios",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
+  "unpkg": "./dist/luckbox.min.js",
+  "jsdelivr": "./dist/luckbox.min.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc -p tsconfig.json && tsc -p test/tsconfig.json",
+    "test": "npm run build && vitest run",
+    "test:watch": "vitest",
+    "coverage": "npm run build && vitest run --coverage",
+    "size": "size-limit",
+    "lint:package": "publint && attw --pack .",
+    "check": "npm run typecheck && npm test && npm run size && npm run lint:package"
+  },
+  "size-limit": [
+    {
+      "name": "core (ESM, minified + brotli)",
+      "path": "dist/index.js",
+      "limit": "3 KB"
+    },
+    {
+      "name": "script tag build (minified + brotli)",
+      "path": "dist/luckbox.min.js",
+      "limit": "4 KB"
+    }
+  ]
+}
