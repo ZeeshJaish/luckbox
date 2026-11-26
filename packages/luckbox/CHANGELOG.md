@@ -2,6 +2,16 @@
 
 All notable changes to luckbox are listed here. This project follows [Semantic Versioning](https://semver.org).
 
+## 0.5.0 (2026-11-27)
+
+Easy for people and AI tools to find and use correctly.
+
+- `AGENTS.md`: rules, the full API and patterns for AI coding agents, shipped in the package. A test checks that every method it names exists.
+- `llms.txt`: a short summary for AI search and assistants.
+- README: a "Building with AI?" prompt to paste into Claude, ChatGPT or Cursor.
+- A docs site (`site/`): a landing page with an FAQ, recipes for Phaser, PixiJS, Three.js, KAPLAY and plain canvas, luckbox vs seedrandom vs `Math.random`, the playground, `llms-full.txt`, a sitemap, structured data and a social image. Tests check every link and parse every recipe's code.
+- More npm keywords.
+
 ## 0.4.0 (2026-11-27)
 
 Easy to try, easy to learn.

@@ -1,8 +1,14 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"],
-    "isolatedDeclarations": false
+    "types": [
+      "node"
+    ],
+    "isolatedDeclarations": false,
+    "allowJs": true
   },
-  "include": [".", "../src"]
+  "include": [
+    ".",
+    "../src"
+  ]
 }

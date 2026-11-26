@@ -1,6 +1,6 @@
 {
   "name": "luckbox",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Seeded, replayable randomness for games: dice notation with exact odds, loot tables with gacha pity and real drop rates, weighted picks, shuffle bags, decks, bell curves, Poisson-disk scatter, simplex noise and daily challenges. Same seed, same results, on every device. Zero dependencies.",
   "keywords": [
     "random",
@@ -31,7 +31,17 @@
     "gacha",
     "pity",
     "poisson disk",
-    "normal distribution"
+    "normal distribution",
+    "seeded",
+    "seed",
+    "pseudorandom",
+    "random number generator",
+    "game development",
+    "tabletop",
+    "procedural",
+    "replay",
+    "gacha pity",
+    "drop rates"
   ],
   "license": "MIT",
   "author": "Zedbury Studios",
@@ -83,7 +93,9 @@
     "noise/package.json",
     "seedrandom/package.json",
     "examples",
-    "docs"
+    "docs",
+    "AGENTS.md",
+    "llms.txt"
   ],
   "engines": {
     "node": ">=20"
@@ -101,7 +113,8 @@
     "test:browser:prepare": "npm run build && node test/browser/make-expected.cjs",
     "prepublishOnly": "npm run check",
     "test:cross": "npm run build && node test/cross/all.mjs",
-    "bench": "npm run build && node bench/bench.mjs"
+    "bench": "npm run build && node bench/bench.mjs",
+    "site": "node site/build.mjs"
   },
   "size-limit": [
     {

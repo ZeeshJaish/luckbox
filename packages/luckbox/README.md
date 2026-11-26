@@ -31,7 +31,7 @@ npm install luckbox
 Single-file HTML game? Use one script tag. Everything, add-ons included, is on `window.luckbox`:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/luckbox@0.4"></script>
+<script src="https://cdn.jsdelivr.net/npm/luckbox@0.5"></script>
 <script>
   const rng = luckbox.luck('my-seed')
   console.log(rng.roll('2d6'))
@@ -41,7 +41,7 @@ Single-file HTML game? Use one script tag. Everything, add-ons included, is on `
 Or import it straight from a CDN:
 
 ```javascript
-import { luck } from 'https://cdn.jsdelivr.net/npm/luckbox@0.4/+esm'
+import { luck } from 'https://cdn.jsdelivr.net/npm/luckbox@0.5/+esm'
 ```
 
 ## Try it without writing code
@@ -89,6 +89,21 @@ seed g
 ```
 
 There's also `npx luckbox pick`, `shuffle`, `daily` and `seed`. Run `npx luckbox --help` for the full list.
+
+## Building with AI?
+
+If Claude, ChatGPT, Cursor or another assistant is writing your game, paste this:
+
+```text
+Use the npm package "luckbox" for all randomness in this game (never Math.random for gameplay).
+Create one generator per run with luck(seed) and show rng.seed so runs can be replayed.
+Give each system its own stream with rng.fork('loot'), rng.fork('enemies') and so on.
+Use rng.int / pick / shuffle / weighted / roll('2d6+3') / loot(table, { pity }) instead of hand-written maths.
+Save and load with rng.state() and luck.from(state).
+Read node_modules/luckbox/AGENTS.md for the full API.
+```
+
+luckbox ships an [`AGENTS.md`](https://unpkg.com/luckbox/AGENTS.md) (rules, the full API and patterns) and an [`llms.txt`](https://unpkg.com/luckbox/llms.txt), so coding agents that read `node_modules` use it correctly.
 
 ## How do I…
 

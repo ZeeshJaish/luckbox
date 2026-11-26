@@ -1,0 +1,27 @@
+# luckbox
+
+> Seeded, replayable randomness for JavaScript and TypeScript games. The same seed gives the same results on every device and in every version. It includes dice notation with exact odds, loot tables with gacha-style pity and real drop rates, weighted picks, shuffle bags, card decks, streak-free crits, bell curves, Poisson-disk scatter, simplex noise and daily challenges. Zero dependencies, about 14 KB, MIT licence. A maintained replacement for the `seedrandom` package (`luckbox/seedrandom` gives the same numbers).
+
+Install: `npm install luckbox`. Import: `import { luck } from 'luckbox'`. Script tag: `https://cdn.jsdelivr.net/npm/luckbox@0`, exposed as `window.luckbox`.
+
+Core idea: `const rng = luck('seed')`, then `rng.int(1, 6)`, `rng.pick(list)`, `rng.roll('4d6kh3')`, `rng.weighted({ gold: 70, gem: 30 })`, `rng.loot(table, { pity })`. Use `rng.fork('name')` for independent streams, and `rng.state()` / `luck.from(state)` to save and load.
+
+## Docs
+
+- [README](https://www.npmjs.com/package/luckbox): every feature with runnable examples, the API table, dice notation and FAQ
+- [Agent guide](https://unpkg.com/luckbox/AGENTS.md): rules, the full API and patterns for AI coding agents
+- [Migrating from seedrandom](https://unpkg.com/luckbox/docs/migrating-from-seedrandom.md): switch without changing any numbers
+
+## Examples
+
+- [Daily puzzle](https://unpkg.com/luckbox/examples/daily-puzzle.mjs): the same daily content for every player
+- [Gacha banner](https://unpkg.com/luckbox/examples/gacha-banner.mjs): pity, odds disclosure and saving
+- [Roguelike dungeon](https://unpkg.com/luckbox/examples/roguelike-dungeon.mjs): forks per system
+- [Card game](https://unpkg.com/luckbox/examples/card-game.mjs): deck draw, discard and reshuffle
+- [Fair crits](https://unpkg.com/luckbox/examples/fair-crits.mjs): pseudo-random distribution
+- [World map](https://unpkg.com/luckbox/examples/world-map.mjs): noise terrain and scatter
+
+## Optional
+
+- [Changelog](https://unpkg.com/luckbox/CHANGELOG.md)
+- CLI: `npx luckbox roll 4d6kh3`, `npx luckbox odds 2d6`, `npx luckbox loot table.json --rates`
