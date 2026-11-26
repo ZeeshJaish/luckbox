@@ -338,7 +338,8 @@ describe('luck.odds()', () => {
     expect(Object.isFrozen(a.totals)).toBe(true)
   })
 
-  it('says when a notation is too big to work out exactly', () => {
+  // Works through about 60 million steps before giving up, so slow CI machines need more than 5 s.
+  it('says when a notation is too big to work out exactly', { timeout: 30_000 }, () => {
     expectCode(() => luck.odds('1000d1000'), 'BAD_DICE')
     expect(() => luck.odds('1000d1000')).toThrow('Roll it many times instead')
     expect(() => luck.odds('d1000000!')).toThrow('too many possible totals')
