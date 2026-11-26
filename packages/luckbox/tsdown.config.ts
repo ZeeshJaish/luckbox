@@ -8,7 +8,7 @@ export default defineConfig([
     platform: 'neutral',
     target: 'es2022',
     dts: true,
-    sourcemap: true,
+    sourcemap: false,
     clean: true,
   },
   // One-file build for <script> tags (single-file HTML games, CDNs).

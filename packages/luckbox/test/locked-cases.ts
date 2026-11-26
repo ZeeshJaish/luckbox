@@ -52,5 +52,36 @@ export function lockedValues(): Record<string, unknown> {
   const fresh = luck('stream')
   out.many = sha256(Array.from({ length: 100_000 }, () => fresh.int(0, 999)))
   out.daily = [luck.daily({ date: '2026-11-26' }).uint32(), luck.weekly({ date: '2026-11-26', salt: 'g' }).uint32()]
+
+  // Phase 2 (locked 2026-11-26)
+  const d = luck('locked-dice')
+  const notations = ['2d6', 'd20+5', '4d6kh3', '2d20kl1', '4d6dl1', '3d6!', '2d6r1', '2d6ro<2', 'd%', '4dF', '5d4*10', '1d8+1d6-2']
+  out.dice = {
+    rolls: notations.map((n) => [n, d.roll(n), d.roll(n), d.roll(n)]),
+    detail: d.dice('4d6kh3+2').text,
+    exploding: Array.from({ length: 20 }, () => d.roll('2d6!')),
+    many: sha256(Array.from({ length: 20_000 }, () => d.roll('3d6!kh2+1d4-2'))),
+  }
+  // Odds use Math.log/exp, so lock them to 12 decimals (the last bits may differ between engines).
+  const round = (x: number): number => Math.round(x * 1e12) / 1e12
+  out.odds = ['4d6kh3', '3d6!kh2+1d4-2', '2d10ro<3*2+5'].map((n) => {
+    const o = luck.odds(n)
+    return [n, o.min, o.max, round(o.mean), o.totals.slice(0, 6).map((t) => [t.total, round(t.chance)])]
+  })
+  const w = luck('locked-weighted')
+  out.weighted = {
+    names: Array.from({ length: 12 }, () => w.weighted({ gold: 70, gem: 25, crown: 5 })),
+    decimal: Array.from({ length: 6 }, () => w.weighted({ a: 0.1, b: 0.2, c: 0.7 })),
+    pairs: Array.from({ length: 6 }, () => w.weighted([[1, 3], [2, 1]] as const)),
+    table: Array.from({ length: 6 }, () => luck.weights({ x: 1, y: 2, z: 3 }).pick(w)),
+  }
+  const b = luck('locked-bag')
+  const bag = b.bag(['I', 'O', 'T', 'S', 'Z', 'J', 'L'], { noRepeat: true })
+  out.bag = Array.from({ length: 21 }, () => bag.next()).join('')
+  const deck = b.deck(['A', 'K', 'Q', 'J', '10', '9', '8'])
+  const hand = deck.drawMany(4)
+  deck.discard(...hand.slice(0, 2))
+  out.deck = { hand, next: deck.drawMany(6), state: deck.state() }
+  out.loot = luck('locked-loot').loot({ common: 80, rare: 18, epic: 2 }).openMany(30).join(',')
   return out
 }

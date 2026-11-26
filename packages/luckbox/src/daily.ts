@@ -88,7 +88,8 @@ function localDate(options: DayOptions | undefined): [number, number, number] {
   }
 
   let ms: number
-  if (date instanceof Date) ms = date.getTime()
+  // Not `instanceof Date`: that fails for Dates from iframes, workers' hosts or test sandboxes.
+  if (Object.prototype.toString.call(date) === '[object Date]') ms = Date.prototype.getTime.call(date)
   else if (typeof date === 'number') ms = date
   else if (typeof date === 'string') ms = Date.parse(date)
   else throw new LuckboxError('BAD_DATE', `date must be a Date, milliseconds or a date string, got ${show(date)}.`)

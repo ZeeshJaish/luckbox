@@ -1,6 +1,10 @@
+import { Bag, type BagOptions, Deck, type DeckOptions } from './bag.ts'
+import { type DiceRoll, type FaceFn, parseDice, rollDice, rollTotal } from './dice.ts'
 import { LuckboxError, show } from './errors.ts'
 import { type Algorithm, type Generator, createGenerator, generatorFromKey } from './generators.ts'
+import { type LootSpec, LootTable } from './loot.ts'
 import { READABLE_ALPHABET, type Seed, type Words4, forkKey } from './seed.ts'
+import { type WeightedEntries, type WeightedTable, type Weights, readWeights } from './weighted.ts'
 
 /** A seed as it can be stored in JSON (bigints become text, which seeds the same). */
 export type JsonSeed = string | number | JsonSeed[]
@@ -69,6 +73,7 @@ export class Rng {
   #algorithm: Algorithm
   #draws: number
   #seed: Seed | undefined
+  readonly #face: FaceFn = (low, high) => low + this.#below(high - low + 1)
 
   /** @internal Use `luck(seed)` or `luck.from(state)` instead. */
   constructor(parts: RngParts) {
@@ -305,6 +310,75 @@ export class Rng {
     const d = this.uint32()
     const h = hex8(a) + hex8(b) + hex8(c) + hex8(d)
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
+  }
+
+  /**
+   * Rolls dice and returns the total. Understands standard dice notation:
+   * `2d6+3`, `d20`, `4d6kh3` (keep highest 3), `2d20kl1` (keep lowest),
+   * `4d6dl1` (drop lowest), `3d6!` (exploding), `2d6r1` (reroll 1s),
+   * `2d6ro1` (reroll once), `d%`, `4dF` (fudge) and `5d4*10`.
+   * @example rng.roll('2d6+3') // 10
+   * @example rng.roll('2d20kh1') // advantage: the better of two d20s
+   */
+  roll(notation: string): number {
+    return rollTotal(parseDice(notation), this.#face)
+  }
+
+  /**
+   * Rolls dice and returns every die, which ones were kept, and a readable line.
+   * Uses the same numbers as `roll()` would.
+   * @example
+   * rng.dice('4d6kh3+2').text // '4d6kh3 (6, 5, 1 dropped, 3) + 2 = 16'
+   */
+  dice(notation: string): DiceRoll {
+    return rollDice(parseDice(notation), this.#face)
+  }
+
+  /**
+   * Picks one item by weight. Bigger weights come up more often, and whole
+   * number weights are exact: weight 5 out of 100 is exactly 5%.
+   * @example rng.weighted({ gold: 70, gem: 25, crown: 5 }) // 'gold'
+   * @example rng.weighted([[sword, 3], [shield, 1]])
+   * @example rng.weighted(enemies, (e) => e.spawnWeight)
+   */
+  weighted<K extends string>(weights: Weights<K>): K
+  weighted<T>(entries: WeightedEntries<T>): T
+  weighted<T>(items: ArrayLike<T>, weightOf: (item: T, index: number) => number): T
+  weighted<T>(table: WeightedTable<T>): T
+  weighted(input: unknown, weightOf?: (item: never, index: number) => number): unknown {
+    return readWeights(input, weightOf as ((item: unknown, index: number) => number) | undefined, 'weighted()').pick(this)
+  }
+
+  /**
+   * A shuffle bag: each item comes out once, in random order, then it refills.
+   * Variety without streaks.
+   * @example
+   * const pieces = rng.bag(['I', 'O', 'T', 'S', 'Z', 'J', 'L'])
+   * pieces.next() // 'T'
+   */
+  bag<T>(items: ArrayLike<T>, options?: BagOptions): Bag<T> {
+    return new Bag(this, items, options)
+  }
+
+  /**
+   * A deck of cards with a draw pile, a discard pile and a hand.
+   * @example
+   * const deck = rng.deck(cards)
+   * const hand = deck.drawMany(5)
+   */
+  deck<T>(cards: ArrayLike<T>, options?: DeckOptions): Deck<T> {
+    return new Deck(this, cards, options)
+  }
+
+  /**
+   * A loot table you can open like a chest.
+   * @example
+   * const chest = rng.loot({ common: 80, rare: 18, epic: 2 })
+   * chest.open() // 'common'
+   * chest.odds() // { common: 0.8, rare: 0.18, epic: 0.02 }
+   */
+  loot<K extends string>(table: LootSpec<K>): LootTable<K> {
+    return new LootTable(this, table)
   }
 
   /**

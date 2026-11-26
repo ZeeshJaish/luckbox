@@ -1,3 +1,4 @@
+import { runInNewContext } from 'node:vm'
 import { describe, expect, it } from 'vitest'
 import { type DayOptions, luck } from '../src/index.ts'
 import { expectCode } from './helpers.ts'
@@ -34,6 +35,12 @@ describe('luck.dayKey()', () => {
   it('accepts milliseconds and ISO date-time text', () => {
     expect(luck.dayKey({ date: Date.UTC(2026, 10, 26, 12) })).toBe('2026-11-26')
     expect(luck.dayKey({ date: '2026-11-26T12:00:00Z' })).toBe('2026-11-26')
+  })
+
+  it('accepts Dates from another realm (iframes, test sandboxes)', () => {
+    const foreign = runInNewContext('new Date("2026-11-26T20:00:00Z")') as Date
+    expect(foreign instanceof Date).toBe(false)
+    expect(luck.dayKey({ date: foreign, timeZone: 'Asia/Kolkata' })).toBe('2026-11-27')
   })
 
   it('uses today when no date is given', () => {

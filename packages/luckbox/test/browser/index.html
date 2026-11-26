@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>luckbox browser check</title>
+<body style="font: 16px system-ui; padding: 16px; max-width: 900px; margin: auto">
+<h1>luckbox in this browser</h1>
+<p>Loads the real <code>dist/luckbox.min.js</code> script tag build and compares every result with Node.</p>
+<pre id="out" style="white-space: pre-wrap">running…</pre>
+<script src="../../dist/luckbox.min.js"></script>
+<script src="fingerprint.js"></script>
+<script>
+  fetch('expected.json').then((r) => r.json()).then((expected) => {
+    const got = fingerprint(luckbox.luck)
+    const diffs = Object.keys(expected).filter((k) => JSON.stringify(got[k]) !== JSON.stringify(expected[k]))
+    const same = diffs.length === 0 && Object.keys(got).length === Object.keys(expected).length
+    document.title = same ? 'MATCH' : 'MISMATCH'
+    document.getElementById('out').textContent =
+      (same ? '✅ Identical to Node (' + Object.keys(expected).length + ' checks)' : '❌ Different from Node: ' + diffs.join(', ')) +
+      '\n\n' + navigator.userAgent + '\n\n' + JSON.stringify(got, null, 1)
+  })
+</script>

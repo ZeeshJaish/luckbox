@@ -16,7 +16,13 @@ interface Built {
 const fingerprint = (luck: typeof source): unknown => {
   const rng = luck('build-check')
   const saved = luck.from(JSON.stringify(rng.fork('f')))
-  return [rng.uint32(), rng.int(1, 6), rng.float(), rng.shuffle([1, 2, 3, 4]), rng.uuid(), saved.uint32(), luck.daily({ date: '2026-11-26' }).seed]
+  const bag = rng.bag(['a', 'b', 'c'])
+  return [
+    rng.uint32(), rng.int(1, 6), rng.float(), rng.shuffle([1, 2, 3, 4]), rng.uuid(), saved.uint32(),
+    luck.daily({ date: '2026-11-26' }).seed,
+    rng.roll('4d6kh3+2'), rng.dice('3d6!').text, rng.weighted({ x: 1, y: 2 }), rng.loot({ a: 1, b: 1 }).open(),
+    [bag.next(), bag.next(), bag.next()], rng.deck([1, 2, 3]).drawMany(3), luck.odds('2d6').chance(7),
+  ]
 }
 const expected = fingerprint(source)
 

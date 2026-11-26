@@ -10,6 +10,7 @@ export type LuckboxErrorCode =
   | 'BAD_ALGORITHM'
   | 'BAD_DATE'
   | 'BAD_TIMEZONE'
+  | 'BAD_DICE'
 
 /**
  * The error luckbox throws. Check `error.code` rather than the message text,

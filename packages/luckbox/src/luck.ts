@@ -1,8 +1,10 @@
 import { type DayOptions, dayKey, weekKey } from './daily.ts'
+import { type DiceOdds, diceOdds } from './dice.ts'
 import { LuckboxError, show } from './errors.ts'
 import { type Algorithm, STATE_SIZE, checkAlgorithm, createGenerator, generatorFromKey } from './generators.ts'
 import { type RngState, Rng } from './rng.ts'
 import { type Seed, type Words4, freshSeed, seedBytes, seedKey } from './seed.ts'
+import { type WeightedEntries, type WeightedTable, type Weights, readWeights } from './weighted.ts'
 
 /** Options for `luck()`. */
 export interface LuckOptions {
@@ -52,6 +54,26 @@ export interface Luck {
    * @example const thisWeek = luck.weekly({ salt: 'my-game' })
    */
   weekly(options?: DailyOptions): Rng
+  /**
+   * The exact chance of every total a dice notation can roll, worked out
+   * with maths (not by rolling), plus min, max and average.
+   * @example
+   * const odds = luck.odds('2d6')
+   * odds.chance(7)    // 0.1667 (6 in 36)
+   * odds.atLeast(10)  // 0.1667
+   * odds.mean         // 7
+   */
+  odds(notation: string): DiceOdds
+  /**
+   * A weighted table ready for fast, repeated picks with `table.pick(rng)`.
+   * Exact for whole-number weights.
+   * @example
+   * const drops = luck.weights({ gold: 70, gem: 25, crown: 5 })
+   * drops.pick(rng) // 'gold'
+   */
+  weights<K extends string>(weights: Weights<K>): WeightedTable<K>
+  weights<T>(entries: WeightedEntries<T>): WeightedTable<T>
+  weights<T>(items: ArrayLike<T>, weightOf: (item: T, index: number) => number): WeightedTable<T>
   /** Today's date as `'YYYY-MM-DD'`. */
   dayKey(options?: DayOptions): string
   /** This week as `'YYYY-Www'`. */
@@ -147,7 +169,10 @@ export const luck: Luck = Object.assign(
     from,
     daily: (options?: DailyOptions): Rng => periodic('daily', options),
     weekly: (options?: DailyOptions): Rng => periodic('weekly', options),
+    odds: diceOdds,
+    weights: (input: unknown, weightOf?: (item: never, index: number) => number): WeightedTable<unknown> =>
+      readWeights(input, weightOf as ((item: unknown, index: number) => number) | undefined, 'weights()'),
     dayKey,
     weekKey,
   },
-)
+) as Luck

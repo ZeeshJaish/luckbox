@@ -1,7 +1,7 @@
 {
   "name": "luckbox",
-  "version": "0.0.0",
-  "description": "Seeded, replayable randomness for games: dice notation, loot tables with pity, gacha odds, shuffle bags, daily challenges. Same seed, same results, on every device. Zero dependencies.",
+  "version": "0.1.0",
+  "description": "Seeded, replayable randomness for games: dice notation with exact odds, loot tables, weighted picks, shuffle bags, card decks and daily challenges. Same seed, same results, on every device. Zero dependencies.",
   "keywords": [
     "random",
     "seeded random",
@@ -12,10 +12,16 @@
     "game",
     "gamedev",
     "dice",
+    "dice notation",
+    "dnd",
+    "rpg",
     "loot table",
-    "gacha",
+    "weighted random",
+    "shuffle bag",
+    "deck",
     "daily challenge",
     "procedural generation",
+    "roguelike",
     "phaser",
     "pixi",
     "threejs",
@@ -61,18 +67,20 @@
     "coverage": "npm run build && vitest run --coverage",
     "size": "size-limit",
     "lint:package": "publint && attw --pack .",
-    "check": "npm run typecheck && npm test && npm run size && npm run lint:package"
+    "check": "npm run typecheck && npm test && npm run size && npm run lint:package",
+    "test:browser:prepare": "npm run build && node test/browser/make-expected.cjs",
+    "prepublishOnly": "npm run check"
   },
   "size-limit": [
     {
-      "name": "core (ESM, minified + brotli)",
+      "name": "everything (ESM, minified + brotli)",
       "path": "dist/index.js",
-      "limit": "5 KB"
+      "limit": "10 KB"
     },
     {
       "name": "script tag build (minified + brotli)",
       "path": "dist/luckbox.min.js",
-      "limit": "5 KB"
+      "limit": "10 KB"
     }
   ]
 }
