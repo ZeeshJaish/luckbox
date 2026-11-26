@@ -118,7 +118,7 @@
     "coverage": "npm run build && vitest run --coverage",
     "size": "size-limit",
     "lint:package": "publint && attw --pack .",
-    "check": "npm run typecheck && npm test && npm run size && npm run lint:package",
+    "check": "npm run build && npm run typecheck && npm test && npm run size && npm run lint:package",
     "test:browser:prepare": "npm run build && node test/browser/make-expected.cjs",
     "prepublishOnly": "npm run check",
     "test:cross": "npm run build && node test/cross/all.mjs",
