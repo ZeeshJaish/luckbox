@@ -12,6 +12,16 @@ export default defineConfig([
     sourcemap: false,
     clean: true,
   },
+  // The `npx luckbox` command (Node only, never imported by apps).
+  {
+    entry: { cli: 'src/cli.ts' },
+    format: 'esm',
+    platform: 'node',
+    target: 'node20',
+    dts: false,
+    clean: false,
+    outputOptions: { banner: '#!/usr/bin/env node' },
+  },
   // One-file build for <script> tags (single-file HTML games, CDNs).
   // Exposes everything on window.luckbox, add-ons included.
   {

@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>luckbox playground</title>
+<meta name="description" content="Try luckbox in your browser: seeded dice with exact odds, a gacha banner with pity, streak-free crits and noise worlds. Same seed, same results.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0e0a1c; --panel: #17112b; --panel-2: #20183a; --line: #2e2450;
+    --text: #f5f2ff; --muted: #a49bc4; --faint: #6f668f;
+    --lime: #c8ff3c; --lime-ink: #132600; --pink: #ff7cc6; --sky: #79d6ff; --lemon: #ffe25a; --mint: #7cf7bf; --coral: #ff8f6b;
+    --r-card: 24px; --r-tile: 14px;
+    --display: 'Plus Jakarta Sans', system-ui, sans-serif; --ui: 'Inter', system-ui, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ink); color: var(--text); font: 15px/1.5 var(--ui); -webkit-font-smoothing: antialiased; }
+  body { background:
+      radial-gradient(1200px 500px at 85% -10%, #2a1a5e 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, #1b2a3f 0%, transparent 55%),
+      var(--ink); min-height: 100vh; }
+  main { max-width: 1120px; margin: 0 auto; padding: 28px 16px 80px; }
+  a { color: var(--lime); }
+  button { font: inherit; cursor: pointer; border: 0; }
+  .pill { border-radius: 999px; padding: 10px 18px; font-weight: 700; transition: transform .15s ease, box-shadow .2s ease, background .2s; }
+  .pill:active { transform: scale(.96); }
+  .pill.lime { background: var(--lime); color: var(--lime-ink); }
+  .pill.lime:hover { box-shadow: 0 0 0 4px #c8ff3c33; }
+  .pill.ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+  .pill.ghost:hover { border-color: var(--muted); }
+
+  /* hero */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 800 20px var(--display); letter-spacing: -.02em; }
+  .logo { width: 36px; height: 36px; border-radius: 11px; background: var(--lime); color: var(--lime-ink); display: grid; place-items: center; font-size: 19px; transform: rotate(-8deg); }
+  .ver { font: 600 12px var(--mono); color: var(--muted); background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+  .install { font: 500 13px var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 8px 8px 8px 16px; display: flex; gap: 10px; align-items: center; }
+  .install button { background: var(--panel-2); color: var(--muted); border-radius: 999px; padding: 4px 12px; font-size: 12px; }
+  h1 { font: 800 clamp(40px, 7.4vw, 84px)/0.98 var(--display); letter-spacing: -.045em; margin: 40px 0 14px; max-width: 900px; }
+  h1 em { font-style: normal; color: var(--lime); }
+  .lede { color: var(--muted); font-size: 17px; max-width: 640px; margin: 0 0 26px; }
+  .seedbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 8px; max-width: 640px; }
+  @media (max-width: 560px) {
+    .seedbar { border-radius: 24px; padding: 12px; }
+    .seedbar input { flex-basis: calc(100% - 80px); }
+    .seedbar .pill { flex: 1 1 40%; white-space: nowrap; }
+  }
+  .seedbar label { font: 700 12px var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--lime); padding-left: 12px; }
+  .seedbar input { flex: 1 1 160px; min-width: 0; background: transparent; border: 0; color: var(--text); font: 700 20px var(--mono); outline: none; padding: 6px 4px; }
+  .proof { margin-top: 12px; font-size: 13px; color: var(--faint); min-height: 20px; }
+  .proof b { color: var(--mint); font-weight: 600; }
+
+  /* layout */
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; margin-top: 44px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-card); padding: 22px; position: relative; overflow: hidden; }
+  .span-7 { grid-column: span 7; } .span-5 { grid-column: span 5; } .span-12 { grid-column: span 12; } .span-6 { grid-column: span 6; }
+  @media (max-width: 880px) { .span-7, .span-5, .span-6 { grid-column: span 12; } }
+  .tag { display: inline-flex; gap: 8px; align-items: center; font: 700 12px var(--mono); text-transform: uppercase; letter-spacing: .12em; padding: 5px 12px; border-radius: 999px; color: var(--ink); }
+  .card h2 { font: 800 28px/1.1 var(--display); letter-spacing: -.03em; margin: 14px 0 6px; }
+  .card p.sub { color: var(--muted); margin: 0 0 18px; }
+  code, .mono { font-family: var(--mono); }
+  .code { font: 500 13px/1.6 var(--mono); color: var(--muted); background: #0c0818; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; overflow-x: auto; white-space: pre; margin-top: 16px; }
+  .code .k { color: var(--pink); } .code .s { color: var(--lime); } .code .c { color: var(--faint); }
+
+  /* dice */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .chip { font: 600 13px var(--mono); background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+  .chip.on { background: var(--sky); color: var(--ink); border-color: var(--sky); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .notation { flex: 1 1 180px; min-width: 0; background: #0c0818; border: 1px solid var(--line); border-radius: 999px; color: var(--text); font: 700 18px var(--mono); padding: 10px 18px; outline: none; }
+  .notation:focus { border-color: var(--sky); }
+  .tray { display: flex; flex-wrap: wrap; gap: 10px; min-height: 66px; margin: 20px 0 8px; align-items: center; }
+  .die { min-width: 56px; height: 56px; padding: 0 10px; border-radius: var(--r-tile); background: var(--text); color: var(--ink); font: 800 24px var(--display); display: grid; place-items: center; animation: tumble .5s cubic-bezier(.2,1.4,.4,1) both; box-shadow: 0 6px 0 #c9c2e6; }
+  .die.dropped { background: transparent; color: var(--faint); box-shadow: none; border: 2px dashed var(--line); text-decoration: line-through; }
+  .die.boom { background: var(--lemon); box-shadow: 0 6px 0 #c9a82c; }
+  .die small { font: 600 11px var(--mono); opacity: .7; margin-left: 2px; }
+  @keyframes tumble { from { transform: translateY(-30px) rotate(-120deg) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+  .total { display: flex; align-items: baseline; gap: 14px; margin: 8px 0 4px; }
+  .total .big { font: 800 72px/1 var(--display); letter-spacing: -.05em; color: var(--sky); font-variant-numeric: tabular-nums; }
+  .total .what { color: var(--muted); font-size: 14px; }
+  .line { font: 500 13px var(--mono); color: var(--muted); min-height: 20px; word-break: break-word; }
+  .error { color: var(--coral); font: 600 14px var(--mono); margin-top: 10px; min-height: 20px; }
+  .chart { display: flex; align-items: flex-end; gap: 3px; height: 130px; margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .bar { flex: 1 1 0; min-width: 2px; background: #3a2f66; border-radius: 5px 5px 2px 2px; position: relative; transition: background .3s, height .5s cubic-bezier(.2,1,.3,1); }
+  .bar.hit { background: var(--sky); box-shadow: 0 0 18px #79d6ff88; }
+  .axis { display: flex; justify-content: space-between; font: 500 11px var(--mono); color: var(--faint); margin-top: 6px; }
+  .history { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+  .history span { font: 700 12px var(--mono); background: var(--panel-2); border-radius: 8px; padding: 3px 8px; color: var(--muted); }
+
+  /* gacha */
+  .pulls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 18px 0; min-height: 132px; }
+  .card-pull { aspect-ratio: 3/4; border-radius: 12px; display: grid; place-items: center; font: 800 15px var(--display); animation: deal .45s cubic-bezier(.2,1.3,.4,1) both; position: relative; }
+  .card-pull .stars { font-size: 13px; letter-spacing: -1px; }
+  .s3 { background: #2b2252; color: #c4bbe8; border: 1px solid #4a3f7a; }
+  .s4 { background: var(--pink); color: #3d0a2a; }
+  .s5 { background: var(--lime); color: var(--lime-ink); box-shadow: 0 0 0 3px #c8ff3c55, 0 0 30px #c8ff3c88; }
+  @keyframes deal { from { transform: translateY(18px) rotateY(90deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  .meter { height: 14px; background: #0c0818; border: 1px solid var(--line); border-radius: 999px; position: relative; overflow: hidden; }
+  .meter .soft { position: absolute; top: 0; bottom: 0; left: calc(73 / 90 * 100%); right: 0; background: repeating-linear-gradient(45deg, #ff7cc622 0 6px, transparent 6px 12px); }
+  .meter .fill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--lime); border-radius: 999px; transition: width .5s cubic-bezier(.2,1,.3,1); }
+  .meter-labels { display: flex; justify-content: space-between; font: 500 11px var(--mono); color: var(--faint); margin-top: 6px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+  .stat { background: var(--panel-2); border-radius: 16px; padding: 12px 14px; }
+  .stat .n { font: 800 26px/1.1 var(--display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 12px; color: var(--muted); }
+  table.rates { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+  table.rates th { text-align: left; font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--faint); padding: 6px 0; }
+  table.rates td { padding: 8px 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  table.rates td:not(:first-child), table.rates th:not(:first-child) { text-align: right; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+
+  /* crits */
+  .strip { display: grid; grid-template-columns: repeat(40, 1fr); gap: 3px; margin: 8px 0 4px; }
+  .strip i { aspect-ratio: 1; border-radius: 3px; background: #2c2350; animation: pop .3s both; }
+  .strip i.hit { background: var(--lime); }
+  .strip.fair i.hit { background: var(--mint); }
+  @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+  .vs { display: flex; justify-content: space-between; align-items: baseline; margin-top: 16px; font-weight: 600; }
+  .vs .worst { font: 800 22px var(--display); font-variant-numeric: tabular-nums; }
+
+  /* world */
+  .world-wrap { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  canvas { width: 100%; border-radius: 18px; image-rendering: pixelated; display: block; background: #0c0818; }
+  .sliders { display: flex; gap: 22px; flex-wrap: wrap; }
+  .sliders label { font: 600 12px var(--mono); color: var(--muted); display: grid; gap: 6px; flex: 1 1 180px; }
+  input[type=range] { accent-color: var(--lime); }
+  footer { margin-top: 48px; color: var(--faint); font-size: 13px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .rise { animation: rise .7s cubic-bezier(.2,1,.3,1) both; }
+  @keyframes rise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="top rise">
+    <div class="brand"><span class="logo">🎲</span> luckbox <span class="ver" id="ver">…</span></div>
+    <div class="install"><span>npm i luckbox</span><button id="copy">copy</button></div>
+  </div>
+
+  <h1 class="rise" style="animation-delay:.05s">Randomness you can <em>replay</em>.</h1>
+  <p class="lede rise" style="animation-delay:.1s">Everything on this page comes from one seed: every dice roll, every gacha pull, the whole world map. Change the seed and it all changes. Type it again and the same results come back, on any device.</p>
+  <div class="seedbar rise" style="animation-delay:.15s">
+    <label for="seed">seed</label>
+    <input id="seed" value="my-seed" spellcheck="false" autocomplete="off">
+    <button class="pill ghost" id="fresh">New seed</button>
+    <button class="pill lime" id="again">Replay</button>
+  </div>
+  <div class="proof" id="proof"></div>
+
+  <div class="grid">
+    <!-- DICE -->
+    <section class="card span-7 rise" style="animation-delay:.2s">
+      <span class="tag" style="background:var(--sky)">⚀ Dice</span>
+      <h2>Any dice, with exact odds</h2>
+      <p class="sub">Keep the highest, explode on max, reroll 1s. The chart shows the real chance of every total, worked out with maths.</p>
+      <div class="chips" id="presets"></div>
+      <div class="row">
+        <input class="notation" id="notation" value="4d6kh3" spellcheck="false" autocomplete="off" aria-label="Dice notation">
+        <button class="pill lime" id="roll">Roll</button>
+      </div>
+      <div class="tray" id="tray"></div>
+      <div class="total"><span class="big" id="total">–</span><span class="what" id="what"></span></div>
+      <div class="line" id="line"></div>
+      <div class="error" id="dice-error"></div>
+      <div class="chart" id="chart"></div>
+      <div class="axis"><span id="ax-min"></span><span id="ax-mean"></span><span id="ax-max"></span></div>
+      <div class="history" id="history"></div>
+    </section>
+
+    <!-- GACHA -->
+    <section class="card span-5 rise" style="animation-delay:.25s">
+      <span class="tag" style="background:var(--lime)">★ Gacha</span>
+      <h2>A banner with pity</h2>
+      <p class="sub">0.6% for a 5★, guaranteed by pull 90, climbing fast from pull 74.</p>
+      <div class="row"><button class="pill lime" id="pull1">Pull ×1</button><button class="pill ghost" id="pull10">Pull ×10</button></div>
+      <div class="pulls" id="pulls"></div>
+      <div class="meter"><div class="soft"></div><div class="fill" id="pity-fill"></div></div>
+      <div class="meter-labels"><span>pulls since last 5★: <b id="pity-n">0</b></span><span>next pull: <b id="next-chance">0.60%</b></span></div>
+      <div class="stats">
+        <div class="stat"><div class="n" id="st-pulls">0</div><div class="l">pulls</div></div>
+        <div class="stat"><div class="n" id="st-5">0</div><div class="l">5★</div></div>
+        <div class="stat"><div class="n" id="st-4">0</div><div class="l">4★</div></div>
+      </div>
+      <table class="rates" id="rates"></table>
+    </section>
+
+    <!-- CRITS -->
+    <section class="card span-6 rise" style="animation-delay:.3s">
+      <span class="tag" style="background:var(--mint)">⚔ Crits</span>
+      <h2>25% crits, without the cruel streaks</h2>
+      <p class="sub">Both rows crit 25% of the time on average. Plain chance can miss 30+ times in a row. <code>fairChance</code> never misses more than 11.</p>
+      <button class="pill lime" id="attack">Attack ×40</button>
+      <div class="vs"><span>chance(0.25)</span><span>longest miss streak <span class="worst" id="worst-plain">0</span></span></div>
+      <div class="strip" id="strip-plain"></div>
+      <div class="vs"><span>fairChance(0.25)</span><span>longest miss streak <span class="worst" id="worst-fair">0</span></span></div>
+      <div class="strip fair" id="strip-fair"></div>
+      <div class="code"><span class="k">const</span> crit = rng.<span class="s">fairChance</span>(0.25)
+<span class="k">if</span> (crit.<span class="s">roll</span>()) damage *= 2</div>
+    </section>
+
+    <!-- WORLD -->
+    <section class="card span-6 rise" style="animation-delay:.35s">
+      <span class="tag" style="background:var(--pink)">◒ World</span>
+      <h2>Worlds from noise</h2>
+      <p class="sub">Layered noise for land, Poisson-disk scatter for trees that never overlap. The same seed always draws the same world.</p>
+      <div class="world-wrap">
+        <canvas id="world" width="240" height="150" aria-label="Generated world map"></canvas>
+        <div class="sliders">
+          <label>detail <input type="range" id="octaves" min="1" max="7" value="5"></label>
+          <label>tree spacing <input type="range" id="spacing" min="3" max="14" value="8"></label>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <span>luckbox · part of the Zedbury Game Kit · MIT</span>
+    <span><a href="https://www.npmjs.com/package/luckbox">npm</a> · every number on this page is seeded</span>
+  </footer>
+</main>
+
+<script>
+  // Load the local build when served from the repo, or the published package from a CDN.
+  function loadLuckbox(next) {
+    const local = document.createElement('script')
+    local.src = '../dist/luckbox.min.js'
+    local.onload = next
+    local.onerror = () => {
+      const cdn = document.createElement('script')
+      cdn.src = 'https://cdn.jsdelivr.net/npm/luckbox@0/dist/luckbox.min.js'
+      cdn.onload = next
+      document.head.appendChild(cdn)
+    }
+    document.head.appendChild(local)
+  }
+
+  loadLuckbox(() => {
+    const L = window.luckbox
+    const $ = (id) => document.getElementById(id)
+    $('ver').textContent = 'v' + L.VERSION
+
+    const BANNER = { star5: 6, star4: 51, star3: 943 }
+    const PITY = { pity: { star5: 90, star4: 10 }, softPity: { star5: { after: 73, add: 0.06 } } }
+    const PRESETS = ['4d6kh3', '2d6', '2d20kh1', '3d6!', '2d6r1+3', '4dF', 'd%', '10d10dl3']
+    let s // everything seeded lives here
+
+    const pct = (p) => (p === 0 ? '0%' : p >= 0.0995 ? (p * 100).toFixed(1) + '%' : (p * 100).toFixed(2) + '%')
+    const countUp = (el, to, ms = 500) => {
+      const from = Number(el.dataset.v || 0)
+      const t0 = performance.now()
+      el.dataset.v = to
+      const step = (t) => {
+        const k = Math.min(1, (t - t0) / ms)
+        const e = 1 - Math.pow(1 - k, 3)
+        el.textContent = Math.round(from + (to - from) * e)
+        if (k < 1) requestAnimationFrame(step)
+      }
+      requestAnimationFrame(step)
+    }
+
+    function setup() {
+      const seed = $('seed').value.trim() || 'my-seed'
+      const root = L.luck(seed)
+      s = {
+        root,
+        dice: root.fork('dice'),
+        bannerRng: root.fork('gacha'),
+        plain: root.fork('crits'),
+        fair: root.fork('crits').fairChance(0.25),
+        world: root.fork('world'),
+        pulls: 0, five: 0, four: 0, history: [], worstPlain: 0, worstFair: 0, runPlain: 0, runFair: 0,
+      }
+      s.banner = s.bannerRng.loot(BANNER, PITY)
+      $('proof').innerHTML = `seed <b>${escapeHtml(seed)}</b> · hash <b>${root.hash()}</b> · open this page anywhere with this seed and you get the same results`
+      $('tray').innerHTML = ''; $('total').textContent = '–'; $('total').dataset.v = 0; $('what').textContent = ''; $('line').textContent = ''; $('history').innerHTML = ''
+      $('pulls').innerHTML = ''; ['st-pulls', 'st-5', 'st-4'].forEach((id) => { $(id).textContent = '0'; $(id).dataset.v = 0 })
+      $('strip-plain').innerHTML = ''; $('strip-fair').innerHTML = ''; $('worst-plain').textContent = '0'; $('worst-fair').textContent = '0'
+      updatePity(); drawChart(); drawWorld(); drawRates()
+    }
+
+    function escapeHtml(t) { return t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]) }
+
+    // ---------- dice
+    const presets = $('presets')
+    for (const p of PRESETS) {
+      const b = document.createElement('button')
+      b.className = 'chip'; b.textContent = p
+      b.onclick = () => { $('notation').value = p; drawChart(); roll() }
+      presets.appendChild(b)
+    }
+    function markPreset() { for (const c of presets.children) c.classList.toggle('on', c.textContent === $('notation').value.trim()) }
+
+    function drawChart(hit) {
+      markPreset()
+      const chart = $('chart')
+      $('dice-error').textContent = ''
+      let odds
+      try { odds = L.luck.odds($('notation').value) } catch (e) { $('dice-error').textContent = e.message.replace(/^luckbox: /, ''); chart.innerHTML = ''; return null }
+      let totals = odds.totals.filter((t) => t.chance > 1e-5)
+      if (totals.length > 80) totals = totals.slice(0, 80)
+      const max = Math.max(...totals.map((t) => t.chance))
+      chart.innerHTML = ''
+      for (const t of totals) {
+        const b = document.createElement('div')
+        b.className = 'bar' + (t.total === hit ? ' hit' : '')
+        b.style.height = Math.max(2, (t.chance / max) * 120) + 'px'
+        b.title = `${t.total}: ${pct(t.chance)}`
+        chart.appendChild(b)
+      }
+      $('ax-min').textContent = totals[0]?.total ?? ''
+      $('ax-mean').textContent = 'average ' + odds.mean.toFixed(2).replace(/\.?0+$/, '')
+      $('ax-max').textContent = totals[totals.length - 1]?.total ?? ''
+      return odds
+    }
+
+    function roll() {
+      const notation = $('notation').value
+      let r
+      try { r = s.dice.dice(notation) } catch (e) { $('dice-error').textContent = e.message.replace(/^luckbox: /, ''); return }
+      const odds = drawChart(r.total)
+      const tray = $('tray')
+      tray.innerHTML = ''
+      let i = 0
+      for (const g of r.groups) for (const d of g.dice) {
+        const el = document.createElement('div')
+        el.className = 'die' + (d.kept ? '' : ' dropped') + (d.rolls.length > 1 ? ' boom' : '')
+        el.style.animationDelay = i++ * 45 + 'ms'
+        el.innerHTML = d.rolls.length > 1 ? `${d.value}<small>!</small>` : String(d.value)
+        if (g.dice.length > 12 && i > 12) continue
+        tray.appendChild(el)
+      }
+      countUp($('total'), r.total)
+      $('what').textContent = odds ? `${pct(odds.chance(r.total))} chance of exactly this` : ''
+      $('line').textContent = r.text
+      s.history.unshift(r.total)
+      $('history').innerHTML = s.history.slice(0, 14).map((t) => `<span>${t}</span>`).join('')
+    }
+
+    // ---------- gacha
+    function updatePity() {
+      const misses = s.banner.state().misses.star5
+      $('pity-n').textContent = misses
+      $('pity-fill').style.width = (misses / 90) * 100 + '%'
+      $('next-chance').textContent = pct(s.banner.odds().star5)
+    }
+    function drawRates() {
+      const real = s.banner.rates()
+      const base = { star5: 0.006, star4: 0.051, star3: 0.943 }
+      const color = { star5: 'var(--lime)', star4: 'var(--pink)', star3: '#4a3f7a' }
+      const name = { star5: '5★', star4: '4★', star3: '3★' }
+      $('rates').innerHTML = '<tr><th>drop</th><th>base</th><th>real, with pity</th></tr>' +
+        Object.keys(base).map((k) => `<tr><td><span class="dot" style="background:${color[k]}"></span>${name[k]}</td><td>${pct(base[k])}</td><td><b>${pct(real[k])}</b></td></tr>`).join('')
+    }
+    function pull(n) {
+      const box = $('pulls')
+      box.innerHTML = ''
+      for (let i = 0; i < n; i++) {
+        const drop = s.banner.open()
+        s.pulls++
+        if (drop === 'star5') s.five++
+        if (drop === 'star4') s.four++
+        const el = document.createElement('div')
+        const stars = drop === 'star5' ? 5 : drop === 'star4' ? 4 : 3
+        el.className = 'card-pull s' + stars
+        el.style.animationDelay = i * 70 + 'ms'
+        el.innerHTML = `<span class="stars">${'★'.repeat(stars)}</span>`
+        box.appendChild(el)
+      }
+      countUp($('st-pulls'), s.pulls); countUp($('st-5'), s.five); countUp($('st-4'), s.four)
+      updatePity()
+    }
+
+    // ---------- crits
+    function attack() {
+      const plainRow = []
+      const fairRow = []
+      for (let i = 0; i < 40; i++) {
+        const a = s.plain.chance(0.25)
+        const b = s.fair.roll()
+        s.runPlain = a ? 0 : s.runPlain + 1
+        s.runFair = b ? 0 : s.runFair + 1
+        s.worstPlain = Math.max(s.worstPlain, s.runPlain)
+        s.worstFair = Math.max(s.worstFair, s.runFair)
+        plainRow.push(a); fairRow.push(b)
+      }
+      const paint = (el, row) => { el.innerHTML = row.map((h, i) => `<i class="${h ? 'hit' : ''}" style="animation-delay:${i * 12}ms"></i>`).join('') }
+      paint($('strip-plain'), plainRow); paint($('strip-fair'), fairRow)
+      countUp($('worst-plain'), s.worstPlain); countUp($('worst-fair'), s.worstFair)
+    }
+
+    // ---------- world
+    function drawWorld() {
+      const canvas = $('world')
+      const ctx = canvas.getContext('2d')
+      const W = canvas.width, H = canvas.height
+      const noise = L.createNoise(s.world.fork('terrain'))
+      const octaves = Number($('octaves').value)
+      const img = ctx.createImageData(W, H)
+      const bands = [[-1, [27, 43, 110]], [-0.18, [44, 92, 170]], [-0.06, [121, 214, 255]], [0, [255, 226, 90]], [0.06, [124, 247, 191]], [0.28, [69, 190, 120]], [0.45, [164, 155, 196]], [0.6, [245, 242, 255]]]
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const h = noise.fbm2d(x / 100, y / 100, { octaves })
+        let c = bands[0][1]
+        for (const [at, col] of bands) if (h >= at) c = col
+        const i = (y * W + x) * 4
+        img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255
+      }
+      ctx.putImageData(img, 0, 0)
+      const spacing = Number($('spacing').value)
+      ctx.fillStyle = '#1d6b44'
+      for (const p of s.world.fork('trees').scatter(W, H, spacing)) {
+        const h = noise.fbm2d(p.x / 100, p.y / 100, { octaves })
+        if (h > 0.06 && h < 0.45) ctx.fillRect(Math.floor(p.x) - 1, Math.floor(p.y) - 1, 3, 3)
+      }
+    }
+
+    // ---------- wiring
+    $('roll').onclick = roll
+    $('notation').addEventListener('keydown', (e) => { if (e.key === 'Enter') roll() })
+    $('notation').addEventListener('input', () => drawChart())
+    $('pull1').onclick = () => pull(1)
+    $('pull10').onclick = () => pull(10)
+    $('attack').onclick = attack
+    $('octaves').oninput = drawWorld
+    $('spacing').oninput = drawWorld
+    $('seed').addEventListener('change', setup)
+    $('again').onclick = setup
+    $('fresh').onclick = () => { $('seed').value = L.luck().seed; setup() }
+    $('copy').onclick = () => { navigator.clipboard?.writeText('npm i luckbox'); $('copy').textContent = 'copied' ; setTimeout(() => ($('copy').textContent = 'copy'), 1200) }
+    setup()
+  })
+</script>
+</body>
+</html>

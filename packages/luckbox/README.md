@@ -31,7 +31,7 @@ npm install luckbox
 Single-file HTML game? Use one script tag. Everything, add-ons included, is on `window.luckbox`:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/luckbox@0.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/luckbox@0.4"></script>
 <script>
   const rng = luckbox.luck('my-seed')
   console.log(rng.roll('2d6'))
@@ -41,8 +41,54 @@ Single-file HTML game? Use one script tag. Everything, add-ons included, is on `
 Or import it straight from a CDN:
 
 ```javascript
-import { luck } from 'https://cdn.jsdelivr.net/npm/luckbox@0.3/+esm'
+import { luck } from 'https://cdn.jsdelivr.net/npm/luckbox@0.4/+esm'
 ```
+
+## Try it without writing code
+
+```bash
+npx luckbox roll 4d6kh3 --times 6 --seed hero
+```
+
+```text
+8  12  11  15  12  13
+average 11.83 · lowest 8 · highest 15
+seed hero
+```
+
+```bash
+npx luckbox odds 2d6
+```
+
+```text
+2d6  min 2 · max 12 · average 7
+total  chance  this or more
+    2   2.78%          100%  █████
+    3   5.56%        97.22%  █████████
+    4   8.33%        91.67%  ██████████████
+    5  11.11%        83.33%  ███████████████████
+    6  13.89%        72.22%  ███████████████████████
+    7  16.67%        58.33%  ████████████████████████████
+    8  13.89%        41.67%  ███████████████████████
+    9  11.11%        27.78%  ███████████████████
+   10   8.33%        16.67%  ██████████████
+   11   5.56%         8.33%  █████████
+   12   2.78%         2.78%  █████
+```
+
+```bash
+npx luckbox loot banner.json --rates
+```
+
+```text
+drop   chance  real rate with pity
+star5   0.60%                1.58%  ▏
+star4   5.10%               12.48%  ███
+star3  94.30%               85.94%  ████████████████████
+seed g
+```
+
+There's also `npx luckbox pick`, `shuffle`, `daily` and `seed`. Run `npx luckbox --help` for the full list.
 
 ## How do I…
 
@@ -256,7 +302,29 @@ const rng = seedrandom('hello.')
 rng()              // 0.9282578795792454: exactly the same numbers as seedrandom
 ```
 
-Checked against the real seedrandom package across 313 seeds and 62,600 numbers, with no differences. Saved states work in both.
+Checked against the real seedrandom package across 313 seeds and 62,600 numbers, with no differences. Saved states work in both. For new code, `luck()` is about 9 times faster and does much more:
+
+| seedrandom | luckbox |
+|---|---|
+| `Math.floor(rng() * 6) + 1` | `rng.int(1, 6)` (no bias) |
+| `arr[Math.floor(rng() * arr.length)]` | `rng.pick(arr)` |
+| `seedrandom('s', { state: true }).state()` | `rng.state()` (plain JSON) |
+| `seedrandom('s', { global: true })` | `luck.patchMathRandom('s')` |
+
+The full guide is [docs/migrating-from-seedrandom.md](https://unpkg.com/browse/luckbox/docs/migrating-from-seedrandom.md), and it ships with the package.
+
+## Examples
+
+Small games you can run with Node. They ship with the package in `node_modules/luckbox/examples` ([browse them](https://unpkg.com/browse/luckbox/examples/)), and the test suite runs every one:
+
+| | |
+|---|---|
+| `daily-puzzle.mjs` | A Wordle-style daily word, the same for every player |
+| `gacha-banner.mjs` | Pity, the real drop rates players are shown, 10-pulls, saving, balance checks |
+| `roguelike-dungeon.mjs` | A dungeon floor from one seed, with forks so systems never disturb each other |
+| `card-game.mjs` | A deck with draw, discard and reshuffle, saved mid-game |
+| `fair-crits.mjs` | Crits without unlucky streaks, against plain chance |
+| `world-map.mjs` | Terrain from noise, and trees scattered without overlaps |
 
 ## API
 

@@ -2,6 +2,15 @@
 
 All notable changes to luckbox are listed here. This project follows [Semantic Versioning](https://semver.org).
 
+## 0.4.0 (2026-11-27)
+
+Easy to try, easy to learn.
+
+- `npx luckbox`: roll dice, show exact odds as a chart, pick, shuffle, open loot tables (from JSON or a file) with real pity rates and simulations, daily seeds and fresh seeds. Every command can be replayed with `--seed`.
+- `examples/`: a daily puzzle, a gacha banner, a roguelike dungeon, a card game, fair crits and a world map. Shipped in the package and run by the tests.
+- `docs/migrating-from-seedrandom.md`: switch without changing a number, and an API mapping table.
+- A playground page (`playground/index.html`) for dice, a pity banner, crit streaks and noise worlds, all from one seed with a Replay button.
+
 ## 0.3.0 (2026-11-27)
 
 Proof that it's reliable, and faster.
