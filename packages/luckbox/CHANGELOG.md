@@ -11,6 +11,7 @@ Easy for people and AI tools to find and use correctly.
 - README: a "Building with AI?" prompt to paste into Claude, ChatGPT or Cursor.
 - A docs site (`site/`): a landing page with an FAQ, recipes for Phaser, PixiJS, Three.js, KAPLAY and plain canvas, luckbox vs seedrandom vs `Math.random`, the playground, `llms-full.txt`, a sitemap, structured data and a social image. Tests check every link and parse every recipe's code.
 - More npm keywords.
+- Public repo [github.com/ZeeshJaish/luckbox](https://github.com/ZeeshJaish/luckbox) and website [zeeshjaish.github.io/luckbox](https://zeeshjaish.github.io/luckbox/). CI shows identical results on Node 20, 22 and 24, Bun, Deno, Chrome, Firefox and WebKit on every push.
 
 ## 0.4.0 (2026-11-27)
 

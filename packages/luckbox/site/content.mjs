@@ -35,8 +35,8 @@ export const FEATURES = [
 ]
 
 export const PROOF = [
-  ['5', 'runtimes giving identical results'],
-  ['473', 'tests on every release'],
+  ['8', 'runtimes giving identical results'],
+  ['490+', 'tests on every release'],
   ['428M', 'numbers per second'],
   ['0', 'dependencies'],
   ['14 KB', 'minified + brotli'],
@@ -299,7 +299,7 @@ export const COMPARE = {
   rows: [
     ['Seedable (same results for the same seed)', '✅', '✅', '❌'],
     ['Last release', 'Nov 2026 (maintained)', 'Sep 2019', 'built in'],
-    ['Same results on every engine, checked', '✅ Node, Bun, Deno, Chrome, WebKit', '–', '❌ not seedable'],
+    ['Same results on every engine, checked', '✅ Node, Bun, Deno, Chrome, Firefox, WebKit', '–', '❌ not seedable'],
     ['Save and restore', '✅ plain JSON', '✅ with { state: true }', '❌'],
     ['Independent streams (fork)', '✅', '❌', '❌'],
     ['Unbiased whole numbers', '✅ rng.int(min, max)', 'write it yourself', 'write it yourself'],

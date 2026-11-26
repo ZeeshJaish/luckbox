@@ -376,12 +376,14 @@ Small games you can run with Node. They ship with the package in `node_modules/l
 | Runtime | Engine | Result |
 |---|---|---|
 | Node 24 | V8 | ✅ the reference |
+| Node 20 and 22 | V8 | ✅ identical |
 | Bun 1.4 | JavaScriptCore | ✅ identical |
 | Deno 2.9 | V8 | ✅ identical |
-| Chrome 152 | V8 | ✅ identical |
+| Chrome 157 | V8 | ✅ identical |
+| Firefox 159 | SpiderMonkey | ✅ identical |
 | Safari (WebKit 27.2) | JavaScriptCore | ✅ identical |
 
-Run it yourself with `npm run test:cross`. The page `test/browser/index.html` does the same check in any browser you open it in.
+GitHub Actions runs this on every push ([CI](https://github.com/ZeeshJaish/luckbox/actions/workflows/ci.yml)). Run it yourself with `npm run test:cross`, or open `test/browser/index.html` in any browser.
 
 **Fair, by the numbers.** Every generator passes these tests on every release, on both the high and the low bits:
 
@@ -438,7 +440,7 @@ luckbox: loot(): put pity in the second argument: rng.loot(table, { pity: ... })
 
 **Will my seeds give different results after I update luckbox?** No. Every result is locked by tests, and a change to any seeded result counts as a breaking bug.
 
-**Where does it run?** Everywhere modern JavaScript runs: browsers, Node 20+, Bun, Deno and web workers. It's tested on Node, Bun, Deno, Chrome and Safari's engine. It has no dependencies and doesn't even need `TextEncoder`.
+**Where does it run?** Everywhere modern JavaScript runs: browsers, Node 20+, Bun, Deno and web workers. It's tested on Node 20, 22 and 24, Bun, Deno, Chrome, Firefox and Safari's engine. It has no dependencies and doesn't even need `TextEncoder`.
 
 ---
 
