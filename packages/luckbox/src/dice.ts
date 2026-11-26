@@ -519,6 +519,10 @@ function binomialRow(m: number, q: number): number[] {
  */
 function keepDist(die: Dist, n: number, k: number, highest: boolean, budget: Budget): Dist {
   const faces = [...die.entries()].sort((a, b) => (highest ? b[0] - a[0] : a[0] - b[0]))
+  // Fail fast: estimate the work before doing it (faces × dice × possible sums × choices).
+  const span = Math.abs((faces[0] as [number, number])[0] - (faces[faces.length - 1] as [number, number])[0])
+  const estimate = faces.length * (n + 1) * Math.min(k * span + 1, 1e9) * ((n + 2) / 2)
+  if (estimate > ODDS_BUDGET) budget.spend(estimate)
   let dp: Dist[] = Array.from({ length: n + 1 }, (): Dist => new Map())
   ;(dp[0] as Dist).set(0, 1)
   let left = 1

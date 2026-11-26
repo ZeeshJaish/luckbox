@@ -17,7 +17,8 @@ const saved = rng.state()                      // save it, load it later, contin
 
 - **Replayable.** A seed gives the same results everywhere, because luckbox does its own maths instead of relying on each browser's `Math.log`. Every release is checked against locked results, so your seeds never change.
 - **Made for games.** Dice notation with exact odds, loot tables with hard and soft pity, real drop rates for gacha odds disclosure, balancing simulations, shuffle bags, decks, streak-free crits, Poisson-disk scattering and simplex noise.
-- **Fair.** No modulo bias, full 53-bit decimals, and generators checked bit for bit against their C reference code.
+- **Fair.** No modulo bias, full 53-bit decimals, and generators checked bit for bit against their C reference code. A battery of statistical tests runs on every release, and it catches a known-bad generator.
+- **Fast.** About 430 million random numbers a second: faster than `Math.random()` and about 9 times faster than seedrandom.
 - **Small.** About 14 KB minified + brotli with no dependencies. Noise and seedrandom compatibility are separate imports, so you only download what you use.
 - **Friendly.** Full TypeScript types, an example on every method, and errors that tell you how to fix the problem.
 
@@ -30,7 +31,7 @@ npm install luckbox
 Single-file HTML game? Use one script tag. Everything, add-ons included, is on `window.luckbox`:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/luckbox@0.2"></script>
+<script src="https://cdn.jsdelivr.net/npm/luckbox@0.3"></script>
 <script>
   const rng = luckbox.luck('my-seed')
   console.log(rng.roll('2d6'))
@@ -40,7 +41,7 @@ Single-file HTML game? Use one script tag. Everything, add-ons included, is on `
 Or import it straight from a CDN:
 
 ```javascript
-import { luck } from 'https://cdn.jsdelivr.net/npm/luckbox@0.2/+esm'
+import { luck } from 'https://cdn.jsdelivr.net/npm/luckbox@0.3/+esm'
 ```
 
 ## How do I…
@@ -285,12 +286,56 @@ Checked against the real seedrandom package across 313 seeds and 62,600 numbers,
 | `createNoise(seed)` from `luckbox/noise` | `noise2d`, `noise3d`, `fbm2d`, `fbm3d`, all from −1 to 1 |
 | `seedrandom(seed)` from `luckbox/seedrandom` | A drop-in replacement for the `seedrandom` package |
 
-## Same results everywhere
+## Proof
+
+**The same results everywhere.** One fingerprint of 31 checks (dice, odds, bell curves, Poisson, noise, pity, seedrandom mode and more) gives identical results, to the last bit, on:
+
+| Runtime | Engine | Result |
+|---|---|---|
+| Node 24 | V8 | ✅ the reference |
+| Bun 1.4 | JavaScriptCore | ✅ identical |
+| Deno 2.9 | V8 | ✅ identical |
+| Chrome 152 | V8 | ✅ identical |
+| Safari (WebKit 27.2) | JavaScriptCore | ✅ identical |
+
+Run it yourself with `npm run test:cross`. The page `test/browser/index.html` does the same check in any browser you open it in.
+
+**Fair, by the numbers.** Every generator passes these tests on every release, on both the high and the low bits:
+
+| Test | What it catches |
+|---|---|
+| Monobit | More ones than zeros |
+| Byte frequency (chi-square, 4 million bytes) | Some values coming up too often |
+| Pairs on a 32 × 32 grid | One number predicting the next |
+| Serial correlation | Patterns between neighbours |
+| Runs | true/false/true/false rhythms |
+| Birthday spacings (Marsaglia) | Hidden lattice structure |
+
+To show these tests can fail, a classic flawed generator (the C library LCG) fails three of them by a wide margin. luckbox's three generators pass all of them.
+
+**Exact maths, checked by brute force.** Dice odds match published tables and every keep/drop combination enumerated by brute force, and they agree with a million real rolls. Pity `rates()` agree with a million simulated opens. Property tests try thousands of random inputs per rule: ranges, shuffles, random dice notations, weights, save/load at any point, forks, and pity limits.
+
+## Speed
+
+Millions of results per second on an Apple M4, Node 24 (`npm run bench`, each row in its own process):
+
+| | Millions / s |
+|---|---|
+| `Math.random()` (not seedable) | 266 |
+| `rng.float()`, sfc32 (default) | 428 |
+| `rng.float()`, mulberry32 | 553 |
+| `rng.int(1, 6)` | 549 |
+| seedrandom `rng()` (the package) | 48 |
+| `rng.normal()` | 25 |
+| `rng.roll('2d6')` | 11 |
+| loot table `open()` | 7.8 |
+
+## How results stay the same
 
 - **Own maths.** JavaScript's `Math.log` and `Math.exp` can round the last bit differently in different browsers. luckbox uses its own versions, built only from `+ − × ÷`, which IEEE 754 makes identical everywhere. They're accurate to within one unit in the last place.
 - **Locked results.** Thousands of results per release are compared with saved values. Any change fails the build.
 - **Checked against references.** The generators match their C reference code, and seedrandom mode matches the real package.
-- **Tested across builds.** Node and Chrome give identical results on every release, for every build: `import`, `require` and the script tag.
+- **Tested across builds and runtimes.** `import`, `require` and the script tag give identical results, in every runtime listed above.
 
 `sfc32` is the default generator: fast, with a 128-bit state, and it passes the PractRand and TestU01 test suites. You can also choose `'xoshiro128**'`, or `'mulberry32'` (the tiniest, fine for visuals): `luck('seed', { algorithm: 'xoshiro128**' })`.
 
@@ -310,7 +355,7 @@ luckbox: loot(): put pity in the second argument: rng.loot(table, { pity: ... })
 
 **Will my seeds give different results after I update luckbox?** No. Every result is locked by tests, and a change to any seeded result counts as a breaking bug.
 
-**Where does it run?** In modern browsers and Node 20+, and it's built to run in any modern JavaScript runtime (Bun, Deno, web workers). It has no dependencies and doesn't even need `TextEncoder`.
+**Where does it run?** Everywhere modern JavaScript runs: browsers, Node 20+, Bun, Deno and web workers. It's tested on Node, Bun, Deno, Chrome and Safari's engine. It has no dependencies and doesn't even need `TextEncoder`.
 
 ---
 

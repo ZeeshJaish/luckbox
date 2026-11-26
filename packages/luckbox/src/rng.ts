@@ -154,13 +154,26 @@ export class Rng {
     return min + this.#below(size)
   }
 
+  // The rejection limit for the last range used: games ask for the same range again and again.
+  #lastN = 0
+  #lastLimit = 0
+
   /** A uniform whole number in [0, n) for 1 ≤ n ≤ 2^53, with no modulo bias. */
   #below(n: number): number {
     if (n === 1) return 0
     if (n <= TWO_32) {
-      const limit = TWO_32 - (TWO_32 % n)
-      let x = this.uint32()
-      while (x >= limit) x = this.uint32()
+      if (n !== this.#lastN) {
+        this.#lastN = n
+        this.#lastLimit = TWO_32 - (TWO_32 % n)
+      }
+      const limit = this.#lastLimit
+      const gen = this.#gen
+      this.#draws++
+      let x = gen.next()
+      while (x >= limit) {
+        this.#draws++
+        x = gen.next()
+      }
       return x % n
     }
     const limit = TWO_53 - (TWO_53 % n)

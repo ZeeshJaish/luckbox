@@ -2,6 +2,18 @@
 
 All notable changes to luckbox are listed here. This project follows [Semantic Versioning](https://semver.org).
 
+## 0.3.0 (2026-11-27)
+
+Proof that it's reliable, and faster.
+
+- Same results to the last bit on Node 24, Bun 1.4, Deno 2.9, Chrome 152 and Safari's WebKit 27.2 (`npm run test:cross`).
+- A statistical fairness battery on all three generators (monobit, byte frequency, pairs, serial correlation, runs, birthday spacings), testing both the high and the low bits. A known-bad LCG fails it.
+- A million real rolls agree with the exact dice odds, and a million opens agree with the pity `rates()`.
+- Property tests over thousands of random inputs (ranges, shuffles, random dice notations, weights, save/load, forks, pity).
+- Faster: `int()` reuses its rejection limit (22 to 549 million per second), and loot tables without pity skip the pity bookkeeping. Results are unchanged.
+- `luck.odds()` reports notations that are too big to work out at once, instead of after a second of work.
+- A speed benchmark (`npm run bench`): `rng.float()` is faster than `Math.random()` and about 9 times faster than seedrandom.
+
 ## 0.2.0 (2026-11-27)
 
 - Loot pity: hard pity (`pity: { epic: 90 }`) and soft pity (`softPity: { epic: { after: 73, add: 0.06 } }`), saved with `state()`.

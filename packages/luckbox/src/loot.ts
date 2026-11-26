@@ -294,12 +294,13 @@ export class LootTable<K extends string> {
    * @example chest.open() // 'rare'
    */
   open(): K {
+    if (!this.#pity.tracked) return this.#table.pick(this.#rng) // no pity: skip the bookkeeping
     const forced = this.#pity.forced(this.#base, this.#all)
     let result: K
     if (forced !== -1) result = this.#table.items[forced] as K
     else if (this.#pity.boosting(this.#all)) result = this.#table.items[pickByChance(this.#rng, this.#pity.chances(this.#base, this.#all))] as K
     else result = this.#table.pick(this.#rng)
-    if (this.#pity.tracked) this.#pity.record(new Set([result]))
+    this.#pity.record(new Set([result]))
     return result
   }
 
