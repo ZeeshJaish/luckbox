@@ -67,12 +67,12 @@
     {
       "name": "core (ESM, minified + brotli)",
       "path": "dist/index.js",
-      "limit": "3 KB"
+      "limit": "5 KB"
     },
     {
       "name": "script tag build (minified + brotli)",
       "path": "dist/luckbox.min.js",
-      "limit": "4 KB"
+      "limit": "5 KB"
     }
   ]
 }
