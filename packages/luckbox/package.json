@@ -1,7 +1,7 @@
 {
   "name": "luckbox",
-  "version": "0.1.0",
-  "description": "Seeded, replayable randomness for games: dice notation with exact odds, loot tables, weighted picks, shuffle bags, card decks and daily challenges. Same seed, same results, on every device. Zero dependencies.",
+  "version": "0.2.0",
+  "description": "Seeded, replayable randomness for games: dice notation with exact odds, loot tables with gacha pity and real drop rates, weighted picks, shuffle bags, decks, bell curves, Poisson-disk scatter, simplex noise and daily challenges. Same seed, same results, on every device. Zero dependencies.",
   "keywords": [
     "random",
     "seeded random",
@@ -25,7 +25,13 @@
     "phaser",
     "pixi",
     "threejs",
-    "kaplay"
+    "kaplay",
+    "noise",
+    "simplex noise",
+    "gacha",
+    "pity",
+    "poisson disk",
+    "normal distribution"
   ],
   "license": "MIT",
   "author": "Zedbury Studios",
@@ -47,13 +53,35 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./noise": {
+      "import": {
+        "types": "./dist/noise.d.ts",
+        "default": "./dist/noise.js"
+      },
+      "require": {
+        "types": "./dist/noise.d.cts",
+        "default": "./dist/noise.cjs"
+      }
+    },
+    "./seedrandom": {
+      "import": {
+        "types": "./dist/seedrandom.d.ts",
+        "default": "./dist/seedrandom.js"
+      },
+      "require": {
+        "types": "./dist/seedrandom.d.cts",
+        "default": "./dist/seedrandom.cjs"
+      }
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "README.md",
     "LICENSE",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "noise/package.json",
+    "seedrandom/package.json"
   ],
   "engines": {
     "node": ">=20"
@@ -73,14 +101,24 @@
   },
   "size-limit": [
     {
-      "name": "everything (ESM, minified + brotli)",
+      "name": "luckbox (minified + brotli)",
       "path": "dist/index.js",
-      "limit": "10 KB"
+      "limit": "15 KB"
     },
     {
-      "name": "script tag build (minified + brotli)",
+      "name": "luckbox/noise",
+      "path": "dist/noise.js",
+      "limit": "3 KB"
+    },
+    {
+      "name": "luckbox/seedrandom",
+      "path": "dist/seedrandom.js",
+      "limit": "2 KB"
+    },
+    {
+      "name": "script tag build, everything",
       "path": "dist/luckbox.min.js",
-      "limit": "10 KB"
+      "limit": "17 KB"
     }
   ]
 }

@@ -11,7 +11,7 @@
 <script src="fingerprint.js"></script>
 <script>
   fetch('expected.json').then((r) => r.json()).then((expected) => {
-    const got = fingerprint(luckbox.luck)
+    const got = fingerprint(luckbox)
     const diffs = Object.keys(expected).filter((k) => JSON.stringify(got[k]) !== JSON.stringify(expected[k]))
     const same = diffs.length === 0 && Object.keys(got).length === Object.keys(expected).length
     document.title = same ? 'MATCH' : 'MISMATCH'

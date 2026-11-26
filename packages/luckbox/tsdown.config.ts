@@ -2,8 +2,9 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig([
   // npm builds: ESM + CommonJS, each with its own type definitions.
+  // Add-ons are separate entries so apps only download what they import.
   {
-    entry: { index: 'src/index.ts' },
+    entry: { index: 'src/index.ts', noise: 'src/noise.ts', seedrandom: 'src/seedrandom.ts' },
     format: ['esm', 'cjs'],
     platform: 'neutral',
     target: 'es2022',
@@ -12,9 +13,9 @@ export default defineConfig([
     clean: true,
   },
   // One-file build for <script> tags (single-file HTML games, CDNs).
-  // Exposes everything on window.luckbox.
+  // Exposes everything on window.luckbox, add-ons included.
   {
-    entry: { luckbox: 'src/index.ts' },
+    entry: { luckbox: 'src/global.ts' },
     format: 'iife',
     globalName: 'luckbox',
     platform: 'browser',

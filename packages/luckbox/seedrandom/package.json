@@ -1,0 +1,5 @@
+{
+  "main": "../dist/seedrandom.cjs",
+  "module": "../dist/seedrandom.js",
+  "types": "../dist/seedrandom.d.cts"
+}

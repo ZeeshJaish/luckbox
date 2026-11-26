@@ -591,5 +591,67 @@
       ]
     }
   },
-  "loot": "rare,common,common,common,common,common,rare,common,common,common,common,common,rare,common,rare,rare,common,common,common,common,rare,epic,epic,common,common,common,common,common,rare,rare"
+  "loot": "rare,common,common,common,common,common,rare,common,common,common,common,common,rare,common,rare,rare,common,common,common,common,rare,epic,epic,common,common,common,common,common,rare,rare",
+  "shapes": {
+    "normal": [
+      92.52168457698085,
+      109.3895384238352,
+      66.81714958564902,
+      86.52922556790166,
+      84.6715266445785
+    ],
+    "exponential": [
+      0.41519680406624054,
+      2.233805397524916,
+      5.010281721651515
+    ],
+    "poisson": [
+      4,
+      23,
+      1043
+    ],
+    "triangular": [
+      4.666324523349899,
+      0.4221300223520901
+    ],
+    "angle": 0.6921768755400504,
+    "points": [
+      {
+        "x": -2.6327204572420513,
+        "y": 0.6724254354565051
+      },
+      {
+        "x": 1.6965069211724182,
+        "y": -1.0591809413004387
+      },
+      {
+        "x": 337.85652200014306,
+        "y": 427.3520313472938
+      }
+    ],
+    "scatter": "23a7ad8b9b41c1eb92df03329824cc61511c9abac4e56652e1b31286c3c3a0c5",
+    "hash": "842b6410"
+  },
+  "fair": "0101000101000000001001000000101010000101",
+  "pity": {
+    "opens": "57b0c592b2ebea276daf7732213fd9915776b90ffc20212edb6b4cebf43a7b5d",
+    "state": {
+      "misses": {
+        "star5": 14,
+        "star4": 5
+      }
+    }
+  },
+  "chest": "[[{\"item\":\"xp\",\"amount\":20},{\"item\":\"gold\",\"amount\":39},{\"item\":\"gold\",\"amount\":34}],[{\"item\":\"xp\",\"amount\":70}],[{\"item\":\"xp\",\"amount\":100},{\"item\":\"gold\",\"amount\":23},{\"item\":\"gold\",\"amount\":29}],[{\"item\":\"xp\",\"amount\":100},{\"item\":\"gold\",\"amount\":31},{\"item\":\"gold\",\"amount\":15}],[{\"item\":\"xp\",\"amount\":60},{\"item\":\"gold\",\"amount\":23}],[{\"item\":\"xp\",\"amount\":80},{\"item\":\"gold\",\"amount\":42},{\"item\":\"gold\",\"amount\":28},{\"item\":\"gold\",\"amount\":38}],[{\"item\":\"xp\",\"amount\":50},{\"item\":\"gold\",\"amount\":34}],[{\"item\":\"xp\",\"amount\":60},{\"item\":\"potion\",\"amount\":1},{\"item\":\"potion\",\"amount\":1}],[{\"item\":\"xp\",\"amount\":80},{\"item\":\"gold\",\"amount\":46}],[{\"item\":\"xp\",\"amount\":70},{\"item\":\"gold\",\"amount\":16}]]",
+  "noise": [
+    -0.5906280696925792,
+    0.2137317866666663,
+    -0.3212580608909683,
+    0
+  ],
+  "seedrandom": [
+    0.7374129663407784,
+    -1172392252,
+    0.08850996801629663
+  ]
 }

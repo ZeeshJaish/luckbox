@@ -2,6 +2,20 @@
 
 All notable changes to luckbox are listed here. This project follows [Semantic Versioning](https://semver.org).
 
+## 0.2.0 (2026-11-27)
+
+- Loot pity: hard pity (`pity: { epic: 90 }`) and soft pity (`softPity: { epic: { after: 73, add: 0.06 } }`), saved with `state()`.
+- `rates()` works out the real long-run drop rates, pity included (for gacha odds disclosure). `simulate(n)` runs balancing tests on its own fork.
+- Full loot tables (`{ drops: ... }`): amounts (`[10, 50]` or dice), several rolls, `unique`, `always`, `nothing`, `when` conditions with a context, and tables inside tables.
+- Shaped randomness: `normal()`, `exponential()`, `poisson()`, `triangular()`.
+- Geometry: `angle()`, `pointInCircle()`, `pointOnCircle()`, `pointInRect()`, and `scatter()` (Poisson-disk sampling).
+- `fairChance(p)`: streak-free chances (pseudo-random distribution).
+- `rng.hash()` for multiplayer sync checks, and `luck.patchMathRandom()` for tests.
+- New `luckbox/noise`: seeded simplex noise (`noise2d`, `noise3d`, `fbm2d`, `fbm3d`).
+- New `luckbox/seedrandom`: the same numbers as the `seedrandom` package (checked on 62,600 values).
+- Own deterministic `ln`/`exp` (within 1 ulp of the built-ins), so the new features and dice odds give bit-identical results in every browser.
+- The README examples now show real values, checked by tests.
+
 ## 0.1.0 (2026-11-26)
 
 First release.

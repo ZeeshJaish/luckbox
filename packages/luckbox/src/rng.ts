@@ -1,9 +1,12 @@
 import { Bag, type BagOptions, Deck, type DeckOptions } from './bag.ts'
 import { type DiceRoll, type FaceFn, parseDice, rollDice, rollTotal } from './dice.ts'
 import { LuckboxError, show } from './errors.ts'
-import { type Algorithm, type Generator, createGenerator, generatorFromKey } from './generators.ts'
-import { type LootSpec, LootTable } from './loot.ts'
-import { READABLE_ALPHABET, type Seed, type Words4, forkKey } from './seed.ts'
+import { FairChance, type FairChanceOptions } from './fair.ts'
+import { ALGORITHMS, type Algorithm, type Generator, createGenerator, generatorFromKey } from './generators.ts'
+import { type Point, type ScatterOptions, scatter } from './geometry.ts'
+import { type FullLootSpec, LootChest, type LootOptions, type LootSpec, LootTable } from './loot.ts'
+import { exp, ln, lnGamma } from './math.ts'
+import { READABLE_ALPHABET, type Seed, type Words4, forkKey, hash128 } from './seed.ts'
 import { type WeightedEntries, type WeightedTable, type Weights, readWeights } from './weighted.ts'
 
 /** A seed as it can be stored in JSON (bigints become text, which seeds the same). */
@@ -38,6 +41,14 @@ export interface RngParts {
 }
 
 const TWO_32 = 0x100000000
+const TAU = 6.283185307179586
+
+function finite(value: unknown, what: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new LuckboxError('BAD_ARGUMENT', `${what} must be a finite number, got ${show(value)}.`)
+  }
+  return value
+}
 const TWO_53 = 9007199254740992
 const TWO_26 = 67108864
 
@@ -372,13 +383,217 @@ export class Rng {
 
   /**
    * A loot table you can open like a chest.
+   *
+   * Simple tables (`{ name: weight }`) give one drop per open. Full tables
+   * (`{ drops: { ... } }`) give a list of drops, with amounts, several rolls,
+   * conditions and tables inside tables. Both take hard and soft pity.
    * @example
-   * const chest = rng.loot({ common: 80, rare: 18, epic: 2 })
-   * chest.open() // 'common'
-   * chest.odds() // { common: 0.8, rare: 0.18, epic: 0.02 }
+   * const chest = rng.loot({ common: 80, rare: 18, epic: 2 }, { pity: { epic: 40 } })
+   * chest.open()  // 'common'
+   * chest.rates() // real long-run rates, pity included
+   * @example
+   * const boss = rng.loot({ rolls: 2, drops: { gold: { weight: 70, amount: [10, 50] }, sword: 30 } })
+   * boss.open()   // [{ item: 'gold', amount: 23 }, { item: 'sword', amount: 1 }]
    */
-  loot<K extends string>(table: LootSpec<K>): LootTable<K> {
-    return new LootTable(this, table)
+  loot<K extends string>(table: LootSpec<K>, options?: LootOptions<K>): LootTable<K>
+  loot<K extends string, C = unknown>(table: FullLootSpec<K, C>, options?: LootOptions<K>): LootChest<K, C>
+  loot(table: unknown, options?: LootOptions): LootTable<string> | LootChest<string> {
+    const drops = (table as { drops?: unknown } | null)?.drops
+    if (drops !== null && typeof drops === 'object') return new LootChest(this, table as FullLootSpec, options)
+    return new LootTable(this, table as LootSpec, options)
+  }
+
+  // ------------------------------------------------------------ shapes of randomness
+
+  /**
+   * A bell-curve number: most results land near `mean`, fewer far away.
+   * About 68% fall within one `sd` of the mean, 95% within two.
+   * @example rng.normal(100, 15) // an IQ-style stat: 85 to 115 most of the time
+   */
+  normal(mean: number = 0, sd: number = 1): number {
+    finite(mean, 'normal(mean, sd): mean')
+    if (finite(sd, 'normal(mean, sd): sd') < 0) {
+      throw new LuckboxError('BAD_ARGUMENT', `normal(mean, sd) needs sd of 0 or more, got ${sd}.`)
+    }
+    // Marsaglia's polar method, with luckbox's own ln so every engine agrees.
+    let u: number
+    let v: number
+    let s: number
+    do {
+      u = this.float() * 2 - 1
+      v = this.float() * 2 - 1
+      s = u * u + v * v
+    } while (s >= 1 || s === 0)
+    return mean + sd * u * Math.sqrt((-2 * ln(s)) / s)
+  }
+
+  /**
+   * Time until the next random event, when events happen `rate` times per
+   * unit of time on average (exponential distribution).
+   * @example const nextSpawnIn = rng.exponential(1 / 30) // 30 seconds on average
+   */
+  exponential(rate: number = 1): number {
+    if (finite(rate, 'exponential(rate): rate') <= 0) {
+      throw new LuckboxError('BAD_ARGUMENT', `exponential(rate) needs a rate above 0, got ${rate}.`)
+    }
+    return -ln(1 - this.float()) / rate
+  }
+
+  /**
+   * How many random events happen in a period when `mean` happen on average
+   * (Poisson distribution). Always a whole number of 0 or more.
+   * @example const meteors = rng.poisson(3) // 3 per night on average
+   */
+  poisson(mean: number): number {
+    if (finite(mean, 'poisson(mean): mean') < 0 || mean > 1e9) {
+      throw new LuckboxError('BAD_ARGUMENT', `poisson(mean) needs a mean from 0 to 1,000,000,000, got ${mean}.`)
+    }
+    if (mean === 0) return 0
+    if (mean < 10) {
+      // Knuth: multiply uniforms until the product drops below e^-mean.
+      const limit = exp(-mean)
+      let k = 0
+      let product = this.float()
+      while (product > limit) {
+        k++
+        product *= this.float()
+      }
+      return k
+    }
+    // Hörmann's transformed rejection (PTRS), as used by NumPy.
+    const slam = Math.sqrt(mean)
+    const logMean = ln(mean)
+    const b = 0.931 + 2.53 * slam
+    const a = -0.059 + 0.02483 * b
+    const invAlpha = 1.1239 + 1.1328 / (b - 3.4)
+    const vr = 0.9277 - 3.6224 / (b - 2)
+    for (;;) {
+      const u = this.float() - 0.5
+      const v = this.float()
+      const us = 0.5 - Math.abs(u)
+      const k = Math.floor(((2 * a) / us + b) * u + mean + 0.43)
+      if (us >= 0.07 && v <= vr) return k
+      if (k < 0 || (us < 0.013 && v > us)) continue
+      if (ln(v) + ln(invAlpha) - ln(a / (us * us) + b) <= -mean + k * logMean - lnGamma(k + 1)) return k
+    }
+  }
+
+  /**
+   * A decimal from `min` to `max` that is most likely near `mode`
+   * (triangular distribution). Handy for "usually about X" values.
+   * @example rng.triangular(1, 10, 3) // damage: 1 to 10, usually around 3
+   */
+  triangular(min: number, max: number, mode: number = (min + max) / 2): number {
+    finite(min, 'triangular(min, max, mode): min')
+    finite(max, 'triangular(min, max, mode): max')
+    finite(mode, 'triangular(min, max, mode): mode')
+    if (!(min <= mode && mode <= max)) {
+      throw new LuckboxError('BAD_ARGUMENT', `triangular(min, max, mode) needs min ≤ mode ≤ max, got (${min}, ${max}, ${mode}).`)
+    }
+    const u = this.float()
+    if (min === max) return min
+    const c = (mode - min) / (max - min)
+    return u < c
+      ? min + Math.sqrt(u * (max - min) * (mode - min))
+      : max - Math.sqrt((1 - u) * (max - min) * (max - mode))
+  }
+
+  // ------------------------------------------------------------ geometry
+
+  /**
+   * A random angle in radians, from 0 up to (not including) 2π.
+   * For degrees use `rng.range(0, 360)`.
+   * @example bullet.angle = rng.angle()
+   */
+  angle(): number {
+    return this.float() * TAU
+  }
+
+  /**
+   * A random point inside a circle centred on (0, 0), spread evenly over the area.
+   * @example const { x, y } = rng.pointInCircle(50) // a spot within 50px
+   */
+  pointInCircle(radius: number = 1): Point {
+    if (finite(radius, 'pointInCircle(radius): radius') < 0) {
+      throw new LuckboxError('BAD_ARGUMENT', `pointInCircle(radius) needs a radius of 0 or more, got ${radius}.`)
+    }
+    let x: number
+    let y: number
+    do {
+      x = this.float() * 2 - 1
+      y = this.float() * 2 - 1
+    } while (x * x + y * y >= 1)
+    return { x: x * radius + 0, y: y * radius + 0 } // + 0 turns -0 into 0
+  }
+
+  /**
+   * A random point on the edge of a circle centred on (0, 0). With radius 1
+   * it is a random direction.
+   * @example const dir = rng.pointOnCircle() // { x, y } of length 1
+   */
+  pointOnCircle(radius: number = 1): Point {
+    if (finite(radius, 'pointOnCircle(radius): radius') < 0) {
+      throw new LuckboxError('BAD_ARGUMENT', `pointOnCircle(radius) needs a radius of 0 or more, got ${radius}.`)
+    }
+    let x: number
+    let y: number
+    let d2: number
+    do {
+      x = this.float() * 2 - 1
+      y = this.float() * 2 - 1
+      d2 = x * x + y * y
+    } while (d2 >= 1 || d2 < 1e-9)
+    const d = Math.sqrt(d2)
+    return { x: (x / d) * radius + 0, y: (y / d) * radius + 0 }
+  }
+
+  /**
+   * A random point inside a width × height rectangle starting at (0, 0).
+   * @example const spawn = rng.pointInRect(800, 600)
+   */
+  pointInRect(width: number, height: number): Point {
+    finite(width, 'pointInRect(width, height): width')
+    finite(height, 'pointInRect(width, height): height')
+    return { x: this.range(0, Math.max(0, width)), y: this.range(0, Math.max(0, height)) }
+  }
+
+  /**
+   * Points spread naturally over an area, never closer than `spacing`
+   * (Poisson-disk sampling). Perfect for trees, rocks, stars and spawn points.
+   * @example const trees = rng.scatter(1000, 1000, 40) // [{ x, y }, ...]
+   */
+  scatter(width: number, height: number, spacing: number, options?: ScatterOptions): Point[] {
+    return scatter(this, width, height, spacing, options)
+  }
+
+  /**
+   * A chance with the same average but no long unlucky streaks: each miss
+   * makes the next try more likely (pseudo-random distribution, as used for
+   * crits in many games).
+   * @example
+   * const crit = rng.fairChance(0.25)
+   * crit.roll() // true about 25% of the time, never 15 misses in a row
+   */
+  fairChance(chance: number, options?: FairChanceOptions): FairChance {
+    return new FairChance(this, chance, options)
+  }
+
+  /**
+   * A short fingerprint of this Rng's exact position. Two players whose
+   * hashes match are in sync; if they differ, something drew a different
+   * number of times.
+   * @example if (rng.hash() !== hostHash) resync()
+   */
+  hash(): string {
+    const words = [ALGORITHMS.indexOf(this.#algorithm), ...this.#key, ...this.#gen.save(), this.#draws % TWO_32, Math.floor(this.#draws / TWO_32)]
+    const bytes = new Uint8Array(words.length * 4)
+    words.forEach((w, i) => {
+      bytes[i * 4] = w >>> 24
+      bytes[i * 4 + 1] = (w >>> 16) & 0xff
+      bytes[i * 4 + 2] = (w >>> 8) & 0xff
+      bytes[i * 4 + 3] = w & 0xff
+    })
+    return hex8(hash128(bytes)[0])
   }
 
   /**

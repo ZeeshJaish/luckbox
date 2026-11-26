@@ -74,6 +74,16 @@ export interface Luck {
   weights<K extends string>(weights: Weights<K>): WeightedTable<K>
   weights<T>(entries: WeightedEntries<T>): WeightedTable<T>
   weights<T>(items: ArrayLike<T>, weightOf: (item: T, index: number) => number): WeightedTable<T>
+  /**
+   * Replaces `Math.random` with a seeded generator, so code you can't change
+   * (or old code) gives repeatable results, handy in tests. Call `restore()`
+   * when done.
+   * @example
+   * const seeded = luck.patchMathRandom('test-seed')
+   * runOldCode()          // every Math.random() call is now repeatable
+   * seeded.restore()      // Math.random is back to normal
+   */
+  patchMathRandom(seed?: Seed, options?: LuckOptions): { rng: Rng; restore: () => void }
   /** Today's date as `'YYYY-MM-DD'`. */
   dayKey(options?: DayOptions): string
   /** This week as `'YYYY-Www'`. */
@@ -170,6 +180,19 @@ export const luck: Luck = Object.assign(
     daily: (options?: DailyOptions): Rng => periodic('daily', options),
     weekly: (options?: DailyOptions): Rng => periodic('weekly', options),
     odds: diceOdds,
+    patchMathRandom(seed?: Seed, options?: LuckOptions): { rng: Rng; restore: () => void } {
+      const rng = create(seed, options)
+      const original = Math.random
+      let active = true
+      Math.random = (): number => rng.float()
+      return {
+        rng,
+        restore(): void {
+          if (active) Math.random = original
+          active = false
+        },
+      }
+    },
     weights: (input: unknown, weightOf?: (item: never, index: number) => number): WeightedTable<unknown> =>
       readWeights(input, weightOf as ((item: unknown, index: number) => number) | undefined, 'weights()'),
     dayKey,

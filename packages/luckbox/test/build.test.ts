@@ -55,8 +55,33 @@ describe('built package', () => {
     expect(JSON.stringify(fingerprint((luckbox as Built).luck))).toBe(JSON.stringify(expected))
   })
 
+  it('add-ons load through the package exports (luckbox/noise, luckbox/seedrandom)', async () => {
+    const noiseEsm = (await import('luckbox/noise')) as typeof import('../src/noise.ts')
+    const srEsm = (await import('luckbox/seedrandom')) as typeof import('../src/seedrandom.ts')
+    const require = createRequire(import.meta.url)
+    const noiseCjs = require('luckbox/noise') as typeof import('../src/noise.ts')
+    const srCjs = require('luckbox/seedrandom') as typeof import('../src/seedrandom.ts')
+    const { createNoise } = await import('../src/noise.ts')
+    const { seedrandom } = await import('../src/seedrandom.ts')
+    const want = createNoise('n').noise2d(1.5, 2.5)
+    expect(noiseEsm.createNoise('n').noise2d(1.5, 2.5)).toBe(want)
+    expect(noiseCjs.createNoise('n').noise2d(1.5, 2.5)).toBe(want)
+    expect(srEsm.seedrandom('hello.')()).toBe(seedrandom('hello.')())
+    expect(srCjs.seedrandom('hello.')()).toBe(0.9282578795792454)
+  })
+
+  it('the script tag build includes the add-ons', () => {
+    const page: Record<string, unknown> = {}
+    runInNewContext(readFileSync(dist('luckbox.min.js'), 'utf8'), page)
+    const lb = page.luckbox as { createNoise: (s: string) => { noise2d(x: number, y: number): number }; seedrandom: (s: string) => () => number }
+    expect(lb.seedrandom('hello.')()).toBe(0.9282578795792454)
+    expect(typeof lb.createNoise('n').noise2d(1, 2)).toBe('number')
+  })
+
   it('ships type definitions for both formats', () => {
-    expect(existsSync(dist('index.d.ts'))).toBe(true)
-    expect(existsSync(dist('index.d.cts'))).toBe(true)
+    for (const name of ['index', 'noise', 'seedrandom']) {
+      expect(existsSync(dist(`${name}.d.ts`))).toBe(true)
+      expect(existsSync(dist(`${name}.d.cts`))).toBe(true)
+    }
   })
 })

@@ -1,0 +1,5 @@
+{
+  "main": "../dist/noise.cjs",
+  "module": "../dist/noise.js",
+  "types": "../dist/noise.d.cts"
+}

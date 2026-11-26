@@ -1,4 +1,5 @@
 import { LuckboxError, show } from './errors.ts'
+import { exp, ln } from './math.ts'
 
 /*
  * Dice notation
@@ -492,7 +493,7 @@ function dieDist(g: DiceGroup, budget: Budget): Dist {
 
 const logFactorials: number[] = [0]
 function logFactorial(n: number): number {
-  for (let i = logFactorials.length; i <= n; i++) logFactorials[i] = (logFactorials[i - 1] as number) + Math.log(i)
+  for (let i = logFactorials.length; i <= n; i++) logFactorials[i] = (logFactorials[i - 1] as number) + ln(i)
   return logFactorials[n] as number
 }
 
@@ -501,10 +502,12 @@ function binomialRow(m: number, q: number): number[] {
   const row = new Array<number>(m + 1).fill(0)
   if (q >= 1) row[m] = 1
   else {
-    const lq = Math.log(q)
-    const lr = Math.log1p(-q)
+    const lq = ln(q)
+    // ln(1 − q) without losing precision for small q (Goldberg's trick), engine-independent.
+    const u = 1 - q
+    const lr = u === 1 ? -q : (ln(u) * -q) / (u - 1)
     const lm = logFactorial(m)
-    for (let c = 0; c <= m; c++) row[c] = Math.exp(lm - logFactorial(c) - logFactorial(m - c) + c * lq + (m - c) * lr)
+    for (let c = 0; c <= m; c++) row[c] = exp(lm - logFactorial(c) - logFactorial(m - c) + c * lq + (m - c) * lr)
   }
   return row
 }

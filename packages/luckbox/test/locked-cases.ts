@@ -2,6 +2,8 @@
 // test/locked.json holds the expected values; locked.test.ts checks them.
 import { createHash } from 'node:crypto'
 import { ALGORITHMS, type Seed, luck } from '../src/index.ts'
+import { createNoise } from '../src/noise.ts'
+import { seedrandom } from '../src/seedrandom.ts'
 
 const SEEDS: Array<[string, Seed]> = [
   ['text', 'luckbox'],
@@ -83,5 +85,40 @@ export function lockedValues(): Record<string, unknown> {
   deck.discard(...hand.slice(0, 2))
   out.deck = { hand, next: deck.drawMany(6), state: deck.state() }
   out.loot = luck('locked-loot').loot({ common: 80, rare: 18, epic: 2 }).openMany(30).join(',')
+
+  // Phase 3 (locked 2026-11-27)
+  const s3 = luck('locked-shapes')
+  out.shapes = {
+    normal: Array.from({ length: 5 }, () => s3.normal(100, 15)),
+    exponential: Array.from({ length: 3 }, () => s3.exponential(0.5)),
+    poisson: [s3.poisson(3), s3.poisson(25), s3.poisson(1000)],
+    triangular: [s3.triangular(1, 10, 3), s3.triangular(0, 1)],
+    angle: s3.angle(),
+    points: [s3.pointInCircle(5), s3.pointOnCircle(2), s3.pointInRect(800, 600)],
+    scatter: sha256(s3.scatter(200, 200, 15).map((p) => `${p.x},${p.y}`)),
+    hash: s3.hash(),
+  }
+  const crit = luck('locked-fair').fairChance(0.25)
+  out.fair = Array.from({ length: 40 }, () => (crit.roll() ? 1 : 0)).join('')
+  const banner = luck('locked-pity').loot(
+    { star5: 6, star4: 51, star3: 943 },
+    { pity: { star5: 90, star4: 10 }, softPity: { star5: { after: 73, add: 0.06 } } },
+  )
+  out.pity = { opens: sha256(banner.openMany(500)), state: banner.state() }
+  const chest = luck('locked-chest').loot({
+    rolls: [1, 3],
+    always: ['xp'],
+    drops: {
+      nothing: 30,
+      xp: { weight: 0, amount: '2d6*10' },
+      gold: { weight: 50, amount: [10, 50] },
+      bonus: { weight: 20, table: { rolls: 2, drops: { potion: 3, scroll: { weight: 1, amount: [1, 2] } } } },
+    },
+  })
+  out.chest = JSON.stringify(chest.openMany(10))
+  const noise = createNoise('locked-noise')
+  out.noise = [noise.noise2d(1.5, -2.25), noise.noise3d(0.3, 0.6, 0.9), noise.fbm2d(10.1, 20.2), noise.fbm3d(1, 2, 3, { octaves: 6 })]
+  const sr = seedrandom('locked-seedrandom')
+  out.seedrandom = [sr(), sr.int32(), sr.quick()]
   return out
 }
