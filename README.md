@@ -1,15 +1,3 @@
-<!-- This file is generated from packages/luckbox/README.md; edit that one. -->
-<p>
-<a href="https://www.npmjs.com/package/luckbox"><img alt="npm" src="https://img.shields.io/npm/v/luckbox?color=c8ff3c&labelColor=0e0a1c"></a>
-<a href="https://github.com/ZeeshJaish/luckbox/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ZeeshJaish/luckbox/actions/workflows/ci.yml/badge.svg"></a>
-<img alt="dependencies: 0" src="https://img.shields.io/badge/dependencies-0-c8ff3c?labelColor=0e0a1c">
-<img alt="license: MIT" src="https://img.shields.io/badge/license-MIT-79d6ff?labelColor=0e0a1c">
-</p>
-
-**[Website](https://zeeshjaish.github.io/luckbox/)** · **[Playground](https://zeeshjaish.github.io/luckbox/playground/)** · **[Recipes](https://zeeshjaish.github.io/luckbox/recipes/)** · **[npm](https://www.npmjs.com/package/luckbox)**
-
-The library lives in [`packages/luckbox`](packages/luckbox), the website in [`packages/luckbox/site`](packages/luckbox/site), and runnable examples in [`packages/luckbox/examples`](packages/luckbox/examples).
-
 # luckbox
 
 **Randomness for games that you can replay.** The same seed gives the same results on every device, in every version. Dice, loot tables with gacha-style pity, weighted picks, shuffle bags, card decks, bell curves, scattered points, map noise and daily challenges are all built in.
@@ -427,7 +415,7 @@ Millions of results per second on an Apple M4, Node 24 (`npm run bench`, each ro
 
 ## How results stay the same
 
-- **Own maths.** JavaScript's `Math.log` and `Math.exp` can round the last bit differently in different browsers. luckbox uses its own versions, built only from `+ − × ÷`, which IEEE 754 makes identical everywhere. They're accurate to within one unit in the last place.
+- **Own maths.** JavaScript's `Math.log` and `Math.exp` really do round the last bit differently on different machines (CI caught macOS and Linux disagreeing). luckbox uses its own versions, built only from `+ − × ÷`, which IEEE 754 makes identical everywhere. They're accurate to about one unit in the last place.
 - **Locked results.** Thousands of results per release are compared with saved values. Any change fails the build.
 - **Checked against references.** The generators match their C reference code, and seedrandom mode matches the real package.
 - **Tested across builds and runtimes.** `import`, `require` and the script tag give identical results, in every runtime listed above.

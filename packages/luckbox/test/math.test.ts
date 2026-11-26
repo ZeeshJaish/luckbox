@@ -1,4 +1,7 @@
-// luckbox's own ln/exp must match the built-ins to within one unit in the last place.
+// luckbox's own ln/exp must agree with the built-ins. Both are accurate to about
+// one unit in the last place (ulp), and the built-ins themselves differ between
+// machines (macOS arm64 vs Linux x64), so they may disagree by up to 2 ulps.
+// luckbox's own versions are what make results identical everywhere: see test/cross.
 import { describe, expect, it } from 'vitest'
 import { exp, ln, lnGamma, pow2 } from '../src/math.ts'
 
@@ -8,13 +11,13 @@ const ulps = (a: number, b: number): number => {
 }
 
 describe('ln()', () => {
-  it('is within 1 ulp of Math.log from 1e-300 to 1e300', () => {
+  it('agrees with Math.log to within 2 ulps from 1e-300 to 1e300', () => {
     let worst = 0
     for (let i = 0; i < 200_000; i++) {
       const x = 10 ** (((i * 7919) % 600_000) / 1000 - 300)
       worst = Math.max(worst, ulps(ln(x), Math.log(x)))
     }
-    expect(worst).toBeLessThanOrEqual(1)
+    expect(worst).toBeLessThanOrEqual(2)
   })
 
   it('handles the edges', () => {
@@ -23,27 +26,27 @@ describe('ln()', () => {
     expect(ln(Number.POSITIVE_INFINITY)).toBe(Number.POSITIVE_INFINITY)
     expect(ln(-1)).toBeNaN()
     expect(ln(Number.NaN)).toBeNaN()
-    expect(ln(5e-324)).toBe(Math.log(5e-324))
-    expect(ulps(ln(1 + 1e-10), Math.log(1 + 1e-10))).toBeLessThanOrEqual(1)
-    expect(ulps(ln(Number.MAX_VALUE), Math.log(Number.MAX_VALUE))).toBeLessThanOrEqual(1)
+    expect(ulps(ln(5e-324), -744.4400719213812)).toBeLessThanOrEqual(2)
+    expect(ulps(ln(1 + 1e-10), Math.log(1 + 1e-10))).toBeLessThanOrEqual(2)
+    expect(ulps(ln(Number.MAX_VALUE), Math.log(Number.MAX_VALUE))).toBeLessThanOrEqual(2)
   })
 })
 
 describe('exp()', () => {
-  it('is within 1 ulp of Math.exp from -700 to 700', () => {
+  it('agrees with Math.exp to within 2 ulps from -700 to 700', () => {
     let worst = 0
     for (let i = 0; i < 200_000; i++) {
       const x = ((i * 7919) % 1_400_000) / 1000 - 700
       worst = Math.max(worst, ulps(exp(x), Math.exp(x)))
     }
-    expect(worst).toBeLessThanOrEqual(1)
+    expect(worst).toBeLessThanOrEqual(2)
   })
 
   it('handles the edges', () => {
     expect(exp(0)).toBe(1)
-    expect(exp(709.7)).toBe(Math.exp(709.7))
+    expect(ulps(exp(709.7), Math.exp(709.7))).toBeLessThanOrEqual(2)
     expect(exp(710)).toBe(Number.POSITIVE_INFINITY)
-    expect(exp(-745)).toBe(Math.exp(-745))
+    expect(exp(-745)).toBe(5e-324)
     expect(exp(-746)).toBe(0)
     expect(exp(Number.NaN)).toBeNaN()
   })
