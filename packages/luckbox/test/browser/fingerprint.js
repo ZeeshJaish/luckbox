@@ -1,5 +1,5 @@
 // Same calls in any environment; returns a JSON-able fingerprint.
-// `lb` is the luckbox namespace: { luck, createNoise, seedrandom }.
+// `lb` is the luckbox namespace: { luck, createNoise, seedrandom, names }.
 function fingerprint(lb) {
   const luck = lb.luck
   const rng = luck('cross-platform')
@@ -42,5 +42,17 @@ function fingerprint(lb) {
   out.noise = [noise.noise2d(1.5, -2.25), noise.noise3d(0.3, 0.6, 0.9), noise.fbm2d(10.1, 20.2, { octaves: 6 })]
   const sr = lb.seedrandom('hello.')
   out.seedrandom = [sr(), sr.int32(), sr.quick()]
+  // 1.1: gacha banners (50/50, guarantee, spark) and the name generator.
+  const g = luck('cross-platform-gacha')
+  const gacha = g.gacha({
+    rates: { star5: 6, star4: 51, star3: 943 },
+    pity: { star5: 90, star4: 10 },
+    softPity: { star5: { after: 73, add: 0.06 } },
+    pools: { star5: { featured: ['Nova'], standard: ['Ash', 'Bryn'] }, star4: { featured: ['Fen'], standard: ['Iris', 'Jax'], featuredChance: 0.75 } },
+    spark: { cost: 50 },
+  })
+  out.gacha = [gacha.pullMany(300).map((p) => p.item[0]).join(''), JSON.stringify(gacha.state()), gacha.redeem('Nova').item, gacha.itemRates()[0].rate]
+  out.names = ['fantasy', 'place', 'planet', 'tavern'].map((style) => lb.names(style).many(g, 4).join(','))
+  out.namesCustom = lb.names(['Zoë', 'Chloé', 'Inès', 'Léa', 'Anaïs', 'Maëlle', 'Noémie', 'Héloïse', 'आरव', 'विवान'], { min: 2 }).many(g, 5)
   return out
 }

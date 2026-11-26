@@ -229,10 +229,12 @@ writeFileSync(join(out, 'recipes/index.html'), recipesIndex)
 RECIPES.forEach((r, i) => writeFileSync(join(out, `recipes/${r.slug}.html`), recipePages[i]))
 writeFileSync(join(out, 'compare.html'), compare)
 
-// The playground loads the published package from the CDN on the live site.
+// The playground loads the published package from the CDN on the live site,
+// pinned to this exact version: a range like @1 can stay cached on an older
+// release for days, and the page may use features that release lacks.
 const playground = readFileSync(join(pkgDir, 'playground/index.html'), 'utf8').replace(
   "local.src = '../dist/luckbox.min.js'",
-  "local.src = 'https://cdn.jsdelivr.net/npm/luckbox@1/dist/luckbox.min.js'",
+  `local.src = 'https://cdn.jsdelivr.net/npm/luckbox@${pkg.version}/dist/luckbox.min.js'`,
 )
 writeFileSync(join(out, 'playground/index.html'), playground)
 

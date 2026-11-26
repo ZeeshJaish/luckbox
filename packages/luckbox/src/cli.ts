@@ -1,6 +1,7 @@
 // `npx luckbox`: try luckbox from the terminal without writing code.
 import { existsSync, readFileSync } from 'node:fs'
-import { type DailyOptions, type FullLootSpec, type LootOptions, LootTable, LuckboxError, type Rng, VERSION, luck } from './index.ts'
+import { type DailyOptions, type FullLootSpec, type GachaSpec, type LootOptions, LootTable, LuckboxError, type Rng, VERSION, luck } from './index.ts'
+import { NAME_STYLES, type NameStyle, names } from './names.ts'
 
 const HELP = `luckbox ${VERSION}: randomness for games that you can replay
 
@@ -10,6 +11,8 @@ Usage
   npx luckbox pick <item> <item> ... [--seed S]
   npx luckbox shuffle <item> <item> ... [--seed S]
   npx luckbox loot <table.json | 'json'> [--open N] [--rates] [--simulate N] [--seed S]
+  npx luckbox gacha <banner.json | 'json'> [--pull N] [--disclosure] [--simulate N] [--seed S]
+  npx luckbox names [fantasy | place | planet | tavern | a,b,c | names.txt] [--count N] [--seed S]
   npx luckbox daily [--salt NAME] [--tz ZONE] [--reset HOUR] [--date YYYY-MM-DD]
   npx luckbox seed
 
@@ -18,6 +21,9 @@ Examples
   npx luckbox odds 2d6                       exact chance of every total
   npx luckbox loot '{"common":80,"rare":18,"epic":2}' --open 10
   npx luckbox loot banner.json --rates       real drop rates, pity included
+  npx luckbox gacha banner.json --pull 10    a 10-pull with the 50/50 and pity
+  npx luckbox gacha banner.json --disclosure the odds to publish for players
+  npx luckbox names tavern --count 5         five inn names
 
 A loot file is a table ({"common": 80, ...} or {"drops": {...}}), or
 {"table": ..., "options": {"pity": {"epic": 90}}} to add pity.
@@ -48,7 +54,7 @@ function parse(argv: readonly string[]): Args {
       const [name, inline] = a.slice(2).split(/=(.*)/s) as [string, string | undefined]
       const next = argv[i + 1]
       if (inline !== undefined) flags.set(name, inline)
-      else if (next !== undefined && !next.startsWith('--') && !['detail', 'rates', 'help', 'version'].includes(name) && !(name === 'simulate' && !/^\d/.test(next))) {
+      else if (next !== undefined && !next.startsWith('--') && !['detail', 'rates', 'help', 'version', 'disclosure'].includes(name) && !(name === 'simulate' && !/^\d/.test(next))) {
         flags.set(name, next)
         i++
       } else flags.set(name, true)
@@ -215,6 +221,72 @@ function loot(args: Args): string {
   return out.join('\n')
 }
 
+function readJson(source: string, what: string): unknown {
+  let json: string
+  if (source.trim().startsWith('{')) json = source
+  else if (existsSync(source)) json = readFileSync(source, 'utf8')
+  else throw new UsageError(`${what} needs a JSON file or JSON text. "${source}" is neither.`)
+  try {
+    return JSON.parse(json)
+  } catch (e) {
+    throw new UsageError(`that ${what} is not valid JSON (${e instanceof Error ? e.message : e}).`)
+  }
+}
+
+function gacha(args: Args): string {
+  const source = args.positional.join(' ')
+  if (!source) throw new UsageError(`gacha needs a banner, like: npx luckbox gacha '{"rates":{"star5":6,"star4":51,"star3":943},"pity":{"star5":90}}'`)
+  const spec = readJson(source, 'banner') as GachaSpec
+  const { rng, replay } = rngFor(args)
+  const banner = rng.gacha(spec)
+  const out: string[] = []
+  const top = banner.rarities[banner.rarities.reduce((best, r, i, all) => ((spec.rates as Record<string, number>)[r] ?? 0) < ((spec.rates as Record<string, number>)[all[best] as string] ?? 0) ? i : best, 0)] as string
+  if (args.flags.has('disclosure')) {
+    out.push(bold('Odds disclosure'), ...banner.disclosure().rules.map((r) => `• ${r}`), '')
+    const rows = [[dim('item'), dim('rarity'), dim('featured'), dim('real rate per pull')]]
+    for (const r of banner.itemRates()) rows.push([bold(r.item), r.rarity, r.featured ? cyan('yes') : '', percent(r.rate)])
+    out.push(table(rows, ['l', 'l', 'l', 'r']))
+  }
+  const pulls = count(args, 'pull', args.flags.has('disclosure') || args.flags.has('simulate') ? 0 : 10, 10_000)
+  if (pulls > 0) {
+    if (out.length) out.push('')
+    const results = banner.pullMany(pulls)
+    const shown = pulls <= 30 ? results : results.filter((p) => p.rarity === top)
+    const rarityWidth = Math.max(...banner.rarities.map((r) => r.length))
+    const itemWidth = Math.max(0, ...shown.map((p) => p.item.length + (p.featured ? 2 : 0)))
+    for (const p of shown) {
+      const name = `${p.item}${p.featured ? ' ★' : ''}`
+      const padded = name.padEnd(itemWidth)
+      const label = p.rarity === top ? green(bold(padded)) : p.featured ? cyan(padded) : padded
+      out.push(`${dim(p.rarity.padEnd(rarityWidth))}  ${label}  ${dim(`pity ${p.pity}`)}`)
+    }
+    if (pulls > 30) out.push(dim(`${pulls} pulls, showing only ${top} (${shown.length})`))
+    const notes = banner.rarities.filter((r) => banner.isGuaranteed(r)).map((r) => `next ${r} is guaranteed featured`)
+    if (spec.spark) notes.push(`${banner.sparks} sparks`)
+    if (notes.length) out.push(dim(notes.join(' · ')))
+  }
+  if (args.flags.has('simulate')) {
+    const n = args.flags.get('simulate') === true ? 100_000 : count(args, 'simulate', 100_000, 10_000_000)
+    const sim = banner.simulate(n)
+    const rows = [[dim('rarity'), dim('count'), dim('rate'), dim('featured share'), dim('longest wait')]]
+    for (const [r, s2] of Object.entries(sim.rarities)) rows.push([bold(r), s2.count.toLocaleString('en-US'), percent(s2.rate), percent(sim.featuredShare[r] ?? 0), `${s2.longestWait.toLocaleString('en-US')} pulls`])
+    out.push('', dim(`simulated ${n.toLocaleString('en-US')} pulls on its own fork:`), table(rows, ['l', 'r', 'r', 'r', 'r']))
+  }
+  if (pulls > 0 || args.flags.has('simulate')) out.push(replay) // the disclosure alone uses no randomness
+  return out.join('\n')
+}
+
+function nameCommand(args: Args): string {
+  const source = args.positional.join(' ') || 'fantasy'
+  let generator
+  if ((NAME_STYLES as readonly string[]).includes(source)) generator = names(source as NameStyle)
+  else if (existsSync(source)) generator = names(readFileSync(source, 'utf8').split(/\r?\n/).map((l) => l.trim()).filter(Boolean))
+  else if (source.includes(',')) generator = names(source.split(',').map((e) => e.trim()).filter(Boolean))
+  else throw new UsageError(`names needs a style (${NAME_STYLES.join(', ')}), example names separated by commas, or a file with one name per line.`)
+  const { rng, replay } = rngFor(args)
+  return `${generator.many(rng, count(args, 'count', 10, 1000)).map((n) => bold(n)).join('\n')}\n${replay}`
+}
+
 function daily(args: Args): string {
   const options: DailyOptions = {}
   const salt = text(args, 'salt')
@@ -252,11 +324,13 @@ function main(argv: readonly string[]): number {
       pick: (a) => pickOrShuffle(a, false),
       shuffle: (a) => pickOrShuffle(a, true),
       loot,
+      gacha,
+      names: nameCommand,
       daily,
       seed: () => bold(String(luck().seed)),
     }
     const run = commands[command]
-    if (!run) throw new UsageError(`unknown command "${command}". Try: roll, odds, pick, shuffle, loot, daily or seed.`)
+    if (!run) throw new UsageError(`unknown command "${command}". Try: roll, odds, pick, shuffle, loot, gacha, names, daily or seed.`)
     console.log(run(args))
     return 0
   } catch (error) {

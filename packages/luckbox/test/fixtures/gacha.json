@@ -1,0 +1,11 @@
+{
+  "rates": { "star5": 6, "star4": 51, "star3": 943 },
+  "pity": { "star5": 90, "star4": 10 },
+  "softPity": { "star5": { "after": 73, "add": 0.06 } },
+  "pools": {
+    "star5": { "featured": ["Nova"], "standard": ["Ash", "Bryn", "Cato", "Dara", "Eira"] },
+    "star4": { "featured": ["Fen", "Gale", "Hoku"], "standard": ["Iris", "Jax", "Kai", "Lumi"] },
+    "star3": { "standard": ["Sword", "Bow", "Staff", "Shield"] }
+  },
+  "spark": { "cost": 300 }
+}

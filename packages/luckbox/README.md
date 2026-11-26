@@ -1,6 +1,6 @@
 # luckbox
 
-**Randomness for games that you can replay.** The same seed gives the same results on every device, in every version. Dice, loot tables with gacha-style pity, weighted picks, shuffle bags, card decks, bell curves, scattered points, map noise and daily challenges are all built in.
+**Randomness for games that you can replay.** The same seed gives the same results on every device, in every version. Dice, loot tables, gacha banners with pity and the 50/50, weighted picks, shuffle bags, card decks, bell curves, scattered points, map noise, name generators and daily challenges are all built in.
 
 ```js
 import { luck } from 'luckbox'
@@ -16,10 +16,10 @@ const saved = rng.state()                      // save it, load it later, contin
 ```
 
 - **Replayable.** A seed gives the same results everywhere, because luckbox does its own maths instead of relying on each browser's `Math.log`. Every release is checked against locked results, so your seeds never change.
-- **Made for games.** Dice notation with exact odds, loot tables with hard and soft pity, real drop rates for gacha odds disclosure, balancing simulations, shuffle bags, decks, streak-free crits, Poisson-disk scattering and simplex noise.
+- **Made for games.** Dice notation with exact odds, loot tables with hard and soft pity, gacha banners with featured items, the 50/50 and spark, real drop rates for odds disclosure, balancing simulations, shuffle bags, decks, streak-free crits, Poisson-disk scattering, simplex noise and name generators.
 - **Fair.** No modulo bias, full 53-bit decimals, and generators checked bit for bit against their C reference code. A battery of statistical tests runs on every release, and it catches a known-bad generator.
 - **Fast.** About 430 million random numbers a second: faster than `Math.random()` and about 9 times faster than seedrandom.
-- **Small.** About 14 KB minified + brotli with no dependencies. Noise and seedrandom compatibility are separate imports, so you only download what you use.
+- **Small.** About 16 KB minified + brotli with no dependencies. Noise, names and seedrandom compatibility are separate imports, so you only download what you use.
 - **Friendly.** Full TypeScript types, an example on every method, and errors that tell you how to fix the problem.
 
 ## Install
@@ -88,7 +88,20 @@ star3  94.30%               85.94%  ██████████████�
 seed g
 ```
 
-There's also `npx luckbox pick`, `shuffle`, `daily` and `seed`. Run `npx luckbox --help` for the full list.
+```bash
+npx luckbox names fantasy --count 5 --seed hero
+```
+
+```text
+Talvara
+Caldran
+Ivorris
+Cael
+Aldra
+seed hero
+```
+
+There's also `npx luckbox gacha` (pulls with the 50/50, the odds disclosure, simulations), `pick`, `shuffle`, `daily` and `seed`. Run `npx luckbox --help` for the full list.
 
 ## Building with AI?
 
@@ -98,7 +111,8 @@ If Claude, ChatGPT, Cursor or another assistant is writing your game, paste this
 Use the npm package "luckbox" for all randomness in this game (never Math.random for gameplay).
 Create one generator per run with luck(seed) and show rng.seed so runs can be replayed.
 Give each system its own stream with rng.fork('loot'), rng.fork('enemies') and so on.
-Use rng.int / pick / shuffle / weighted / roll('2d6+3') / loot(table, { pity }) instead of hand-written maths.
+Use rng.int / pick / shuffle / weighted / roll('2d6+3') / loot(table, { pity }) / gacha(banner) instead of hand-written maths.
+For names, use names('fantasy').next(rng) from 'luckbox/names'.
 Save and load with rng.state() and luck.from(state).
 Read node_modules/luckbox/AGENTS.md for the full API.
 ```
@@ -205,6 +219,30 @@ banner.rates()       // the real long-run rates: star5 ≈ 1.58%, not 0.6%
 
 `rates()` works out the long-run rates exactly, pity included. Those are the numbers many countries require games to show players. `banner.state()` saves the pity counters.
 
+### …run a gacha banner with featured characters, the 50/50 and spark?
+
+```js
+const banner = luck('banner-demo').gacha({
+  rates: { star5: 6, star4: 51, star3: 943 },
+  pity: { star5: 90, star4: 10 },
+  softPity: { star5: { after: 73, add: 0.06 } },
+  pools: {
+    star5: { featured: ['Nova'], standard: ['Ash', 'Bryn', 'Cato'] },   // the 50/50: lose it and the next 5★ is Nova
+    star4: { featured: ['Fen', 'Gale'], standard: ['Iris', 'Jax'] },
+    star3: { standard: ['Sword', 'Bow', 'Staff'] },
+  },
+  spark: { cost: 300 },                         // every pull earns a point; 300 points buy a featured item
+})
+const ten = banner.pullMany(10)
+ten[1].item                                     // 'Gale'
+ten[1].featured                                 // true
+banner.sparks                                   // 10
+banner.itemRates()[0].rate.toFixed(4)           // '0.0105': Nova's real rate per pull
+banner.disclosure().rules                       // the odds text to show players
+```
+
+Each pull returns `{ rarity, item, featured, pity }`. A featured item wins half the time, and losing guarantees it next time, so Nova is ⅔ of all 5★ drops. That makes its real rate 1.58% × ⅔ = 1.05% per pull, and `itemRates()` works that out for every item. `disclosure()` writes it all out as sentences for your odds page (or run `npx luckbox gacha banner.json --disclosure`). Once `banner.sparks` reaches the cost, `banner.redeem('Nova')` buys it. `banner.state()` saves the pity, the guarantee and the sparks, and `simulate(n)` checks balance on its own fork.
+
 ### …drop gold amounts, several items, or items only for high-level players?
 
 Give the table a `drops` object, and each open returns a list:
@@ -294,6 +332,23 @@ const tile = height > 0.4 ? 'mountain' : height > 0 ? 'grass' : 'water'
 noise.noise3d(x, y, time)                      // animated noise: use z as time
 ```
 
+### …generate names for characters, towns and planets?
+
+```js
+import { names } from 'luckbox/names'
+
+const rng = luck('my-world')
+names('fantasy').next(rng)      // 'Rhillon'
+names('place').next(rng)        // 'Harthurst'
+names('planet').next(rng)       // 'Vandora'
+names('tavern').next(rng)       // 'The Pike & Stag'
+
+const japanese = names(['Haruto', 'Yuto', 'Sota', 'Yuki', 'Hinata', 'Riku', 'Kaito', 'Ren', 'Aoi', 'Hana', 'Sakura', 'Akari'])
+japanese.many(rng, 3).join(', ') // 'Sana, Hariki, Yuta': new names in the style of your examples
+```
+
+Give it your own examples and it learns which letters follow which, so the names fit your world. It never copies an example unless you pass `{ allowExamples: true }`, and accents and other scripts work too. `many(rng, n)` gives `n` different names. It's a separate import of under 3 KB. With the script tag it's `luckbox.names`.
+
 ### …check two players are still in sync?
 
 ```javascript
@@ -335,7 +390,7 @@ Small games you can run with Node. They ship with the package in `node_modules/l
 | | |
 |---|---|
 | `daily-puzzle.mjs` | A Wordle-style daily word, the same for every player |
-| `gacha-banner.mjs` | Pity, the real drop rates players are shown, 10-pulls, saving, balance checks |
+| `gacha-banner.mjs` | A featured character with the 50/50, pity, spark, the odds players are shown, saving, balance checks |
 | `roguelike-dungeon.mjs` | A dungeon floor from one seed, with forks so systems never disturb each other |
 | `card-game.mjs` | A deck with draw, discard and reshuffle, saved mid-game |
 | `fair-crits.mjs` | Crits without unlucky streaks, against plain chance |
@@ -359,6 +414,7 @@ Small games you can run with Node. They ship with the package in `node_modules/l
 | `rng.weighted(...)` | One item by weight |
 | `rng.roll(notation)`, `rng.dice(notation)` | A dice total; every die, plus a readable line |
 | `rng.loot(table, options?)` | A loot table: `open()`, `openMany(n)`, `odds()`, `rates()` (simple tables), `simulate(n)`, `state()` |
+| `rng.gacha(banner, options?)` | A gacha banner: `pull()`, `pullMany(n)`, featured items with the 50/50 and guarantee, `redeem(item)` for spark, `itemRates()`, `disclosure()`, `simulate(n)`, `state()` |
 | `rng.bag(items, options?)`, `rng.deck(cards, options?)` | A shuffle bag; a deck with draw, discard, hand, `putBack` and `reshuffle` |
 | `rng.fairChance(p)` | A chance with no long streaks: `roll()`, `chanceNow`, `worstCase`, `state()` |
 | `rng.normal(mean, sd)`, `rng.triangular(min, max, mode)`, `rng.exponential(rate)`, `rng.poisson(mean)` | Shaped randomness |
@@ -367,11 +423,12 @@ Small games you can run with Node. They ship with the package in `node_modules/l
 | `rng.fork(name)`, `rng.clone()`, `rng.hash()` | An independent named stream; a copy; a sync fingerprint |
 | `rng.state()`, `rng.seed`, `rng.draws`, `rng.uint32()` | Save; the seed; numbers drawn so far; raw 32-bit output |
 | `createNoise(seed)` from `luckbox/noise` | `noise2d`, `noise3d`, `fbm2d`, `fbm3d`, all from −1 to 1 |
+| `names(style or examples, options?)` from `luckbox/names` | `'fantasy'`, `'place'`, `'planet'`, `'tavern'` or your own example names: `next(rng)`, `many(rng, n)` |
 | `seedrandom(seed)` from `luckbox/seedrandom` | A drop-in replacement for the `seedrandom` package |
 
 ## Proof
 
-**The same results everywhere.** One fingerprint of 31 checks (dice, odds, bell curves, Poisson, noise, pity, seedrandom mode and more) gives identical results, to the last bit, on:
+**The same results everywhere.** One fingerprint of 34 checks (dice, odds, bell curves, Poisson, noise, pity, gacha, names, seedrandom mode and more) gives identical results, to the last bit, on:
 
 | Runtime | Engine | Result |
 |---|---|---|
@@ -398,7 +455,7 @@ GitHub Actions runs this on every push ([CI](https://github.com/ZeeshJaish/luckb
 
 To show these tests can fail, a classic flawed generator (the C library LCG) fails three of them by a wide margin. luckbox's three generators pass all of them.
 
-**Exact maths, checked by brute force.** Dice odds match published tables and every keep/drop combination enumerated by brute force, and they agree with a million real rolls. Pity `rates()` agree with a million simulated opens. Property tests try thousands of random inputs per rule: ranges, shuffles, random dice notations, weights, save/load at any point, forks, and pity limits.
+**Exact maths, checked by brute force.** Dice odds match published tables and every keep/drop combination enumerated by brute force, and they agree with a million real rolls. Pity `rates()` agree with a million simulated opens, and gacha `itemRates()` with a million simulated pulls. Property tests try thousands of random inputs per rule: ranges, shuffles, random dice notations, weights, save/load at any point, forks, and pity limits.
 
 ## Speed
 

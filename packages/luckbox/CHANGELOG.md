@@ -2,6 +2,25 @@
 
 All notable changes to luckbox are listed here. This project follows [Semantic Versioning](https://semver.org).
 
+## 1.1.0 (2026-11-27)
+
+Gacha banners and names. Nothing existing changed: every seed gives the same results as in 1.0.
+
+- **`rng.gacha(banner)`**: a full gacha banner built on loot pity.
+  - Featured (rate-up) items with the 50/50 and its guarantee: lose it and the next drop of that rarity is featured. `featuredChance` and `guarantee` can be set per rarity.
+  - Spark: every pull earns a point, and `redeem(item)` spends them on a chosen item.
+  - `itemRates()`: every item's real long-run rate, pity and guarantee included. A 50/50 with a guarantee makes the featured item ⅔ of its rarity, not half.
+  - `disclosure()`: base and real rates, pity and the featured rules as sentences for your odds page.
+  - `simulate(n)` runs on its own fork. `state()` saves pity, the guarantee, sparks and the pull count.
+- **`luckbox/names`**: seeded names in four styles, `'fantasy'`, `'place'`, `'planet'` and `'tavern'`, or learned from your own example names with a letter-level Markov chain.
+  - Learned names never copy an example unless you pass `allowExamples`.
+  - Short lists fall back to one letter of context where two letters only continue one way, so they still make plenty of new names.
+  - Accents and other scripts are handled as whole letters.
+  - It's a separate import of under 3 KB, and `luckbox.names` with the script tag.
+- CLI: `npx luckbox gacha banner.json` (pulls, `--disclosure`, `--simulate`) and `npx luckbox names [style | a,b,c | file.txt]`.
+- The cross-runtime fingerprint grew to 34 checks, adding gacha and names, and gives identical results on every engine.
+- `examples/gacha-banner.mjs` now uses `rng.gacha()`. The playground shows item names, the 50/50, spark and town names.
+
 ## 1.0.0 (2026-11-27)
 
 The first stable release. From now on luckbox follows semantic versioning:

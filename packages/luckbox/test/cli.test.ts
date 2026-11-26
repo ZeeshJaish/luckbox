@@ -2,7 +2,9 @@
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { VERSION, luck } from '../src/index.ts'
+import * as namesModule from '../src/names.ts'
 
 const cli = fileURLToPath(new URL('../dist/cli.mjs', import.meta.url))
 const run = (...args: string[]): { out: string; err: string; code: number } => {
@@ -64,6 +66,37 @@ describe('npx luckbox', () => {
     expect(out).toContain('star5')
   })
 
+  it('pulls a gacha banner with pity, the 50/50 and spark', () => {
+    const file = fileURLToPath(new URL('./fixtures/gacha.json', import.meta.url))
+    const spec = JSON.parse(readFileSync(file, 'utf8'))
+    const { out, code } = run('gacha', file, '--pull', '10', '--seed', 'demo')
+    expect(code).toBe(0)
+    const pulls = luck('demo').gacha(spec).pullMany(10)
+    const lines = out.split('\n')
+    pulls.forEach((p, i) => expect(lines[i]?.split(/\s{2,}/)).toEqual([p.rarity, `${p.item}${p.featured ? ' ★' : ''}`, `pity ${p.pity}`]))
+    expect(out).toContain('10 sparks')
+    const disclosure = run('gacha', file, '--disclosure').out
+    expect(disclosure).toContain('Odds disclosure')
+    expect(disclosure).not.toContain('seed') // no randomness used, so no seed to replay
+    expect(disclosure).toContain('If it isn\'t, the next star5 is guaranteed featured.')
+    expect(disclosure).toMatch(/Nova\s+star5\s+yes\s+1\.05%/)
+    const sim = run('gacha', file, '--simulate', '20000', '--seed', 's').out
+    expect(sim).toContain('simulated 20,000 pulls')
+    expect(sim).toContain('featured share')
+    expect(run('gacha', file, '--pull', '200', '--seed', 'w').out).toContain('200 pulls, showing only star5')
+  })
+
+  it('makes names in a style, from examples, or from a file', () => {
+    const { names } = namesModule
+    expect(run('names', 'tavern', '--count', '3', '--seed', 'd').out.split('\n').slice(0, 3)).toEqual(names('tavern').many(luck('d'), 3))
+    expect(run('names', '--count', '2', '--seed', 'd').out.split('\n').slice(0, 2)).toEqual(names('fantasy').many(luck('d'), 2))
+    const fromList = run('names', 'Haruto,Yuto,Sota,Yuki,Hinata,Riku,Kaito,Ren', '--count', '3', '--seed', 'd').out
+    expect(fromList.split('\n')).toHaveLength(4)
+    const file = fileURLToPath(new URL('./fixtures/names.txt', import.meta.url))
+    expect(run('names', file, '--count', '2', '--seed', 'd').code).toBe(0)
+    expect(run('names', 'elvish').code).toBe(2)
+  })
+
   it('shows daily and weekly seeds', () => {
     const { out } = run('daily', '--salt', 'my-game', '--date', '2026-11-27')
     expect(out).toContain('my-game:daily:2026-11-27')
@@ -82,7 +115,7 @@ describe('npx luckbox', () => {
     const bad = run('roll', '4d6kh5')
     expect(bad.code).toBe(1)
     expect(bad.err).toContain("can't keep 5 of 4 dice")
-    for (const args of [['dance'], ['roll'], ['odds'], ['pick'], ['loot'], ['loot', 'nope.json'], ['loot', '{bad'], ['roll', '1d6', '--times', '0'], ['roll', '1d6', '--seed']]) {
+    for (const args of [['dance'], ['roll'], ['odds'], ['pick'], ['loot'], ['loot', 'nope.json'], ['loot', '{bad'], ['roll', '1d6', '--times', '0'], ['roll', '1d6', '--seed'], ['gacha'], ['gacha', 'nope.json'], ['gacha', '{bad']]) {
       const r = run(...args)
       expect(r.code, args.join(' ')).toBe(2)
       expect(r.err).toContain('luckbox:')

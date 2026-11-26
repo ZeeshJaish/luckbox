@@ -653,5 +653,63 @@
     0.7374129663407784,
     -1172392252,
     0.08850996801629663
-  ]
+  ],
+  "gacha": {
+    "pulls": "a6107c344961b76ba83663ddc4a54162340e1f04fa413f3dc282336185e315a6",
+    "state": {
+      "pity": {
+        "misses": {
+          "star5": 35,
+          "star4": 9
+        }
+      },
+      "since": {
+        "star5": 35,
+        "star4": 9,
+        "star3": 0
+      },
+      "guaranteed": {
+        "star5": true,
+        "star4": true,
+        "star3": false
+      },
+      "sparks": 500,
+      "pulls": 500
+    }
+  },
+  "names": {
+    "fantasy": [
+      "Mirelith",
+      "Gwendis",
+      "Zephyria",
+      "Caelwyndis",
+      "Faela"
+    ],
+    "place": [
+      "Old Whiteridge",
+      "Upper Pineworth",
+      "Netherwell",
+      "Greyspur",
+      "Ironvale"
+    ],
+    "planet": [
+      "Dynara b",
+      "Hypedor",
+      "Mara",
+      "Ultos III",
+      "Vandon"
+    ],
+    "tavern": [
+      "The Tankard & Hare",
+      "The Crooked Dagger",
+      "The Copper Compass"
+    ],
+    "custom": [
+      "Soto",
+      "Sana",
+      "Hanata",
+      "Yuikiku",
+      "Aota"
+    ]
+  }
 }

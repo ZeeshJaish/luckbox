@@ -162,5 +162,24 @@
   0.9282578795792454,
   1611716443,
   0.22962240758351982
+ ],
+ "gacha": [
+  "sssssssssFsssssssssFsssssssssFsssssssssFsssFsssssssssFFsssssssssJsssssssssFFNssFssssssNssFsssssssssFsssssssssJsssssFsssFsssssssssFsssssssssFsssssssssFsFsFsssssssIBssssssFsssssssssFsssssssssFsssssssssJsssssssssFsssssssssJsssssFsssssssFsssNsssssFsJsssssssssFsBsssssssIsssssssFsssssssssFsssssssssIssssFs",
+  "{\"pity\":{\"misses\":{\"star5\":42,\"star4\":1}},\"since\":{\"star5\":42,\"star4\":1,\"star3\":0},\"guaranteed\":{\"star5\":true,\"star4\":false,\"star3\":false},\"sparks\":300,\"pulls\":300}",
+  "Nova",
+  0.010500381730822905
+ ],
+ "names": [
+  "Kaelam,Caelam,Brynde,Miren",
+  "Stoneton,Little Stonemoor,Little Tidefall,Larkreach",
+  "Velion,Borra,Orvan,Wyris",
+  "The Hidden Stag,The Pike & Kettle,The Stag & Crown,The Rooster & Fox"
+ ],
+ "namesCustom": [
+  "Loémanoë",
+  "Noë",
+  "Inaë",
+  "Chéa",
+  "Hé"
  ]
 }

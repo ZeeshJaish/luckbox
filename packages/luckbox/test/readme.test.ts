@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import * as luckbox from '../src/index.ts'
 import { createNoise } from '../src/noise.ts'
+import { names } from '../src/names.ts'
 import { seedrandom } from '../src/seedrandom.ts'
 
 const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
@@ -38,8 +39,8 @@ describe('README examples', () => {
     const check = (code: string, got: unknown, want: unknown): void => {
       if (!Object.is(got, want)) failures.push(`${code} gave ${JSON.stringify(got)}, README says ${JSON.stringify(want)}`)
     }
-    const run = new Function('luck', 'createNoise', 'seedrandom', 'check', source)
-    run(luckbox.luck, createNoise, seedrandom, check)
+    const run = new Function('luck', 'createNoise', 'seedrandom', 'names', 'check', source)
+    run(luckbox.luck, createNoise, seedrandom, names, check)
     expect(failures).toEqual([])
   })
 

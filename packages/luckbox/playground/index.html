@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>luckbox playground</title>
-<meta name="description" content="Try luckbox in your browser: seeded dice with exact odds, a gacha banner with pity, streak-free crits and noise worlds. Same seed, same results.">
+<meta name="description" content="Try luckbox in your browser: seeded dice with exact odds, a gacha banner with pity, the 50/50 and spark, streak-free crits, and noise worlds with town names. Same seed, same results.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
@@ -92,8 +92,16 @@
 
   /* gacha */
   .pulls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 18px 0; min-height: 132px; }
-  .card-pull { aspect-ratio: 3/4; border-radius: 12px; display: grid; place-items: center; font: 800 15px var(--display); animation: deal .45s cubic-bezier(.2,1.3,.4,1) both; position: relative; }
-  .card-pull .stars { font-size: 13px; letter-spacing: -1px; }
+  .card-pull { aspect-ratio: 3/4; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: 800 15px var(--display); animation: deal .45s cubic-bezier(.2,1.3,.4,1) both; position: relative; min-width: 0; }
+  .card-pull .stars { font-size: 11px; letter-spacing: -1px; }
+  .card-pull .nm { font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+  .card-pull .up { position: absolute; top: 5px; right: 5px; font: 800 8px/1 var(--mono); letter-spacing: .05em; background: var(--ink); color: var(--lime); border-radius: 4px; padding: 2px 3px; }
+  .fifty { font: 600 12px var(--mono); color: var(--muted); margin-top: 12px; }
+  .fifty b { color: var(--text); }
+  .fifty.sure b { color: var(--lime); }
+  .pill:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .towns { font-size: 14px; color: var(--muted); margin: 0; }
+  .towns b { color: var(--text); font-weight: 700; }
   .s3 { background: #2b2252; color: #c4bbe8; border: 1px solid #4a3f7a; }
   .s4 { background: var(--pink); color: #3d0a2a; }
   .s5 { background: var(--lime); color: var(--lime-ink); box-shadow: 0 0 0 3px #c8ff3c55, 0 0 30px #c8ff3c88; }
@@ -173,16 +181,17 @@
     <!-- GACHA -->
     <section class="card span-5 rise" style="animation-delay:.25s">
       <span class="tag" style="background:var(--lime)">★ Gacha</span>
-      <h2>A banner with pity</h2>
-      <p class="sub">0.6% for a 5★, guaranteed by pull 90, climbing fast from pull 74.</p>
-      <div class="row"><button class="pill lime" id="pull1">Pull ×1</button><button class="pill ghost" id="pull10">Pull ×10</button></div>
+      <h2>A banner with the 50/50</h2>
+      <p class="sub">0.6% for a 5★, guaranteed by pull 90, climbing fast from pull 74. Each 5★ is a 50/50 for the featured Nova, and losing it makes the next 5★ Nova. 300 pulls of spark buy Nova outright.</p>
+      <div class="row"><button class="pill lime" id="pull1">Pull ×1</button><button class="pill ghost" id="pull10">Pull ×10</button><button class="pill ghost" id="spark" disabled>Spark 0 / 300</button></div>
       <div class="pulls" id="pulls"></div>
       <div class="meter"><div class="soft"></div><div class="fill" id="pity-fill"></div></div>
       <div class="meter-labels"><span>pulls since last 5★: <b id="pity-n">0</b></span><span>next pull: <b id="next-chance">0.60%</b></span></div>
+      <div class="fifty" id="fifty"></div>
       <div class="stats">
         <div class="stat"><div class="n" id="st-pulls">0</div><div class="l">pulls</div></div>
         <div class="stat"><div class="n" id="st-5">0</div><div class="l">5★</div></div>
-        <div class="stat"><div class="n" id="st-4">0</div><div class="l">4★</div></div>
+        <div class="stat"><div class="n" id="st-nova">0</div><div class="l">Nova</div></div>
       </div>
       <table class="rates" id="rates"></table>
     </section>
@@ -205,13 +214,14 @@
     <section class="card span-6 rise" style="animation-delay:.35s">
       <span class="tag" style="background:var(--pink)">◒ World</span>
       <h2>Worlds from noise</h2>
-      <p class="sub">Layered noise for land, Poisson-disk scatter for trees that never overlap. The same seed always draws the same world.</p>
+      <p class="sub">Layered noise for land, Poisson-disk scatter for trees that never overlap, and town names from <code>luckbox/names</code>. The same seed always draws the same world.</p>
       <div class="world-wrap">
         <canvas id="world" width="240" height="150" aria-label="Generated world map"></canvas>
         <div class="sliders">
           <label>detail <input type="range" id="octaves" min="1" max="7" value="5"></label>
           <label>tree spacing <input type="range" id="spacing" min="3" max="14" value="8"></label>
         </div>
+        <p class="towns" id="towns"></p>
       </div>
     </section>
   </div>
@@ -242,8 +252,17 @@
     const $ = (id) => document.getElementById(id)
     $('ver').textContent = 'v' + L.VERSION
 
-    const BANNER = { star5: 6, star4: 51, star3: 943 }
-    const PITY = { pity: { star5: 90, star4: 10 }, softPity: { star5: { after: 73, add: 0.06 } } }
+    const BANNER = {
+      rates: { star5: 6, star4: 51, star3: 943 },
+      pity: { star5: 90, star4: 10 },
+      softPity: { star5: { after: 73, add: 0.06 } },
+      pools: {
+        star5: { featured: ['Nova'], standard: ['Ash', 'Bryn', 'Cato'] },
+        star4: { featured: ['Fen', 'Gale'], standard: ['Iris', 'Jax', 'Kai'] },
+        star3: { standard: ['Sword', 'Bow', 'Staff', 'Shield'] },
+      },
+      spark: { cost: 300, items: ['Nova'] },
+    }
     const PRESETS = ['4d6kh3', '2d6', '2d20kh1', '3d6!', '2d6r1+3', '4dF', 'd%', '10d10dl3']
     let s // everything seeded lives here
 
@@ -271,14 +290,15 @@
         plain: root.fork('crits'),
         fair: root.fork('crits').fairChance(0.25),
         world: root.fork('world'),
-        pulls: 0, five: 0, four: 0, history: [], worstPlain: 0, worstFair: 0, runPlain: 0, runFair: 0,
+        five: 0, nova: 0, history: [], worstPlain: 0, worstFair: 0, runPlain: 0, runFair: 0,
       }
-      s.banner = s.bannerRng.loot(BANNER, PITY)
+      s.banner = s.bannerRng.gacha(BANNER)
       $('proof').innerHTML = `seed <b>${escapeHtml(seed)}</b> · hash <b>${root.hash()}</b> · open this page anywhere with this seed and you get the same results`
       $('tray').innerHTML = ''; $('total').textContent = '–'; $('total').dataset.v = 0; $('what').textContent = ''; $('line').textContent = ''; $('history').innerHTML = ''
-      $('pulls').innerHTML = ''; ['st-pulls', 'st-5', 'st-4'].forEach((id) => { $(id).textContent = '0'; $(id).dataset.v = 0 })
+      $('pulls').innerHTML = ''; ['st-pulls', 'st-5', 'st-nova'].forEach((id) => { $(id).textContent = '0'; $(id).dataset.v = 0 })
       $('strip-plain').innerHTML = ''; $('strip-fair').innerHTML = ''; $('worst-plain').textContent = '0'; $('worst-fair').textContent = '0'
       updatePity(); drawChart(); drawWorld(); drawRates()
+      $('towns').innerHTML = 'Towns: ' + L.names('place').many(s.world.fork('towns'), 4).map((t) => `<b>${escapeHtml(t)}</b>`).join(' · ')
     }
 
     function escapeHtml(t) { return t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]) }
@@ -341,35 +361,50 @@
 
     // ---------- gacha
     function updatePity() {
-      const misses = s.banner.state().misses.star5
+      const misses = s.banner.state().pity.misses.star5
       $('pity-n').textContent = misses
       $('pity-fill').style.width = (misses / 90) * 100 + '%'
       $('next-chance').textContent = pct(s.banner.odds().star5)
+      const sure = s.banner.isGuaranteed('star5')
+      $('fifty').className = 'fifty' + (sure ? ' sure' : '')
+      $('fifty').innerHTML = sure ? 'lost the last 50/50, so the next 5★ is <b>Nova, guaranteed</b>' : 'next 5★: <b>a 50/50 for Nova</b>'
+      $('spark').textContent = s.banner.sparks >= 300 ? 'Spark: get Nova' : `Spark ${s.banner.sparks} / 300`
+      $('spark').disabled = s.banner.sparks < 300
     }
     function drawRates() {
-      const real = s.banner.rates()
-      const base = { star5: 0.006, star4: 0.051, star3: 0.943 }
+      const d = s.banner.disclosure()
       const color = { star5: 'var(--lime)', star4: 'var(--pink)', star3: '#4a3f7a' }
       const name = { star5: '5★', star4: '4★', star3: '3★' }
+      const nova = d.items.find((i) => i.item === 'Nova')
       $('rates').innerHTML = '<tr><th>drop</th><th>base</th><th>real, with pity</th></tr>' +
-        Object.keys(base).map((k) => `<tr><td><span class="dot" style="background:${color[k]}"></span>${name[k]}</td><td>${pct(base[k])}</td><td><b>${pct(real[k])}</b></td></tr>`).join('')
+        d.rarities.map((r) => `<tr><td><span class="dot" style="background:${color[r.rarity]}"></span>${name[r.rarity]}</td><td>${pct(r.baseRate)}</td><td><b>${pct(r.rate)}</b></td></tr>`).join('') +
+        `<tr><td><span class="dot" style="background:var(--lime)"></span>Nova, featured</td><td>${pct(d.rarities[0].baseRate / 2)}</td><td><b>${pct(nova.rate)}</b></td></tr>`
+    }
+    function card(p, i) {
+      const stars = p.rarity === 'star5' ? 5 : p.rarity === 'star4' ? 4 : 3
+      const el = document.createElement('div')
+      el.className = 'card-pull s' + stars
+      el.style.animationDelay = i * 70 + 'ms'
+      el.innerHTML = `<span class="stars">${'★'.repeat(stars)}</span><span class="nm">${escapeHtml(p.item)}</span>` + (p.featured ? '<span class="up">UP</span>' : '')
+      return el
+    }
+    function count(p) {
+      if (p.rarity === 'star5') s.five++
+      if (p.item === 'Nova') s.nova++
     }
     function pull(n) {
       const box = $('pulls')
       box.innerHTML = ''
-      for (let i = 0; i < n; i++) {
-        const drop = s.banner.open()
-        s.pulls++
-        if (drop === 'star5') s.five++
-        if (drop === 'star4') s.four++
-        const el = document.createElement('div')
-        const stars = drop === 'star5' ? 5 : drop === 'star4' ? 4 : 3
-        el.className = 'card-pull s' + stars
-        el.style.animationDelay = i * 70 + 'ms'
-        el.innerHTML = `<span class="stars">${'★'.repeat(stars)}</span>`
-        box.appendChild(el)
-      }
-      countUp($('st-pulls'), s.pulls); countUp($('st-5'), s.five); countUp($('st-4'), s.four)
+      s.banner.pullMany(n).forEach((p, i) => { count(p); box.appendChild(card(p, i)) })
+      countUp($('st-pulls'), s.banner.totalPulls); countUp($('st-5'), s.five); countUp($('st-nova'), s.nova)
+      updatePity()
+    }
+    function spark() {
+      const p = s.banner.redeem('Nova')
+      count(p)
+      $('pulls').innerHTML = ''
+      $('pulls').appendChild(card(p, 0))
+      countUp($('st-5'), s.five); countUp($('st-nova'), s.nova)
       updatePity()
     }
 
@@ -422,6 +457,7 @@
     $('notation').addEventListener('input', () => drawChart())
     $('pull1').onclick = () => pull(1)
     $('pull10').onclick = () => pull(10)
+    $('spark').onclick = spark
     $('attack').onclick = attack
     $('octaves').oninput = drawWorld
     $('spacing').oninput = drawWorld

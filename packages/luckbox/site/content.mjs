@@ -4,14 +4,15 @@ export const SITE = {
   name: 'luckbox',
   tagline: 'Seeded random for games, that you can replay',
   description:
-    'luckbox is a seeded random number generator for JavaScript and TypeScript games. The same seed gives the same results everywhere, with dice notation, loot tables with gacha pity, weighted picks, shuffle bags, noise and daily challenges built in.',
+    'luckbox is a seeded random number generator for JavaScript and TypeScript games. The same seed gives the same results everywhere, with dice notation, loot tables and gacha banners with pity and the 50/50, weighted picks, shuffle bags, noise, name generators and daily challenges built in.',
   cdn: 'https://cdn.jsdelivr.net/npm/luckbox@1',
 }
 
 export const PROMPT = `Use the npm package "luckbox" for all randomness in this game (never Math.random for gameplay).
 Create one generator per run with luck(seed) and show rng.seed so runs can be replayed.
 Give each system its own stream with rng.fork('loot'), rng.fork('enemies') and so on.
-Use rng.int / pick / shuffle / weighted / roll('2d6+3') / loot(table, { pity }) instead of hand-written maths.
+Use rng.int / pick / shuffle / weighted / roll('2d6+3') / loot(table, { pity }) / gacha(banner) instead of hand-written maths.
+For names, use names('fantasy').next(rng) from 'luckbox/names'.
 Save and load with rng.state() and luck.from(state).
 Read node_modules/luckbox/AGENTS.md for the full API.`
 
@@ -28,18 +29,21 @@ const saved = rng.state()                      // save it, load it later, contin
 export const FEATURES = [
   { tag: 'Dice', color: 'sky', title: 'Dice with exact odds', code: "rng.roll('4d6kh3')\nluck.odds('2d6').chance(7) // 0.1667", text: 'Keep, drop, explode, reroll, fudge dice and multipliers. The odds are worked out with maths, not by rolling.' },
   { tag: 'Loot', color: 'lime', title: 'Gacha pity, real rates', code: "rng.loot(table, { pity: { epic: 90 } })\nchest.rates() // with pity", text: 'Hard and soft pity, long-run rates for odds disclosure, and balancing simulations.' },
-  { tag: 'Chests', color: 'pink', title: 'Full loot chests', code: "{ rolls: [1, 3], drops: {\n  gold: { weight: 50, amount: [10, 50] } } }", text: 'Amounts, several rolls, no repeats, drops only for high-level players, tables inside tables.' },
-  { tag: 'Fair', color: 'mint', title: 'Crits without streaks', code: 'const crit = rng.fairChance(0.25)\ncrit.roll()', text: 'The same average with no cruel dry runs. Shuffle bags and card decks are included too.' },
-  { tag: 'Worlds', color: 'lemon', title: 'Noise and scatter', code: "createNoise(seed).fbm2d(x, y)\nrng.scatter(1000, 1000, 40)", text: 'Simplex terrain, plus Poisson-disk placement for trees and rocks that never overlap.' },
-  { tag: 'Daily', color: 'coral', title: 'Daily challenges', code: "luck.daily({ salt: 'my-game' })", text: 'The same daily level for every player in the world, with time zones and reset hours.' },
+  { tag: 'Gacha', color: 'pink', title: 'Banners with the 50/50', code: "pools: { star5: { featured: ['Nova'] } }\nbanner.disclosure().rules", text: 'Featured characters, the 50/50 and its guarantee, spark points, and every item’s real rate for your odds page.' },
+  { tag: 'Chests', color: 'mint', title: 'Full loot chests', code: "{ rolls: [1, 3], drops: {\n  gold: { weight: 50, amount: [10, 50] } } }", text: 'Amounts, several rolls, no repeats, drops only for high-level players, tables inside tables.' },
+  { tag: 'Fair', color: 'lemon', title: 'Crits without streaks', code: 'const crit = rng.fairChance(0.25)\ncrit.roll()', text: 'The same average with no cruel dry runs. Shuffle bags and card decks are included too.' },
+  { tag: 'Worlds', color: 'coral', title: 'Noise and scatter', code: "createNoise(seed).fbm2d(x, y)\nrng.scatter(1000, 1000, 40)", text: 'Simplex terrain, plus Poisson-disk placement for trees and rocks that never overlap.' },
+  { tag: 'Names', color: 'sky', title: 'Names for your world', code: "names('fantasy').next(rng) // 'Rhillon'\nnames(['Haruto', 'Yuki', …])", text: 'Heroes, towns, planets and taverns, or new names learned from your own examples. It never copies them.' },
+  { tag: 'Daily', color: 'lime', title: 'Daily challenges', code: "luck.daily({ salt: 'my-game' })", text: 'The same daily level for every player in the world, with time zones and reset hours.' },
+  { tag: 'Saves', color: 'pink', title: 'Save, fork and sync', code: "luck.from(rng.state())\nrng.fork('loot')\nrng.hash()", text: 'Plain-JSON saves that continue exactly, a separate stream for each system, and a fingerprint to check multiplayer sync.' },
 ]
 
 export const PROOF = [
   ['8', 'runtimes giving identical results'],
-  ['490+', 'tests on every release'],
+  ['520+', 'tests on every release'],
   ['428M', 'numbers per second'],
   ['0', 'dependencies'],
-  ['14 KB', 'minified + brotli'],
+  ['16 KB', 'minified + brotli'],
 ]
 
 export const FAQ = [
@@ -54,6 +58,14 @@ export const FAQ = [
   {
     q: 'How do I show gacha drop rates that include pity?',
     a: 'Make the banner with <code>rng.loot(rates, { pity: { star5: 90 }, softPity: { star5: { after: 73, add: 0.06 } } })</code> and call <code>banner.rates()</code>. It works out the exact long-run rates with pity included: for a 0.6% base rate with these settings, about 1.6%.',
+  },
+  {
+    q: 'How do I make a gacha banner with a 50/50 and a guarantee?',
+    a: 'Use <code>rng.gacha({ rates, pity, pools: { star5: { featured: [\'Nova\'], standard: [\'Ash\', \'Bryn\'] } }, spark: { cost: 300 } })</code>. A featured item wins half the time, and losing guarantees it next time, so it is ⅔ of all 5★ drops in the long run. <code>banner.itemRates()</code> gives every item’s real rate, <code>banner.disclosure()</code> writes the odds text for players, and <code>banner.state()</code> saves pity, the guarantee and spark points.',
+  },
+  {
+    q: 'How do I generate fantasy names in JavaScript?',
+    a: 'Use <code>import { names } from \'luckbox/names\'</code>, then <code>names(\'fantasy\').next(rng)</code>. There are styles for fantasy characters, places, planets and taverns. Or pass a few of your own example names and it learns their style. The same seed always gives the same names.',
   },
   {
     q: 'Is luckbox a replacement for seedrandom?',
@@ -305,6 +317,8 @@ export const COMPARE = {
     ['Unbiased whole numbers', '✅ rng.int(min, max)', 'write it yourself', 'write it yourself'],
     ['Dice notation with exact odds', '✅', '❌', '❌'],
     ['Loot tables, pity, real drop rates', '✅', '❌', '❌'],
+    ['Gacha banners: the 50/50, guarantee, spark, odds disclosure', '✅', '❌', '❌'],
+    ['Name generators', '✅', '❌', '❌'],
     ['Shuffle bags, decks, streak-free chance', '✅', '❌', '❌'],
     ['Bell curves, scatter, noise', '✅', '❌', '❌'],
     ['Daily and weekly seeds', '✅', '❌', '❌'],

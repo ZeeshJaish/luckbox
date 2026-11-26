@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 const dir = fileURLToPath(new URL('../examples/', import.meta.url))
 const EXPECT: Record<string, string[]> = {
   'daily-puzzle.mjs': ['Puzzle #27 (2026-11-27)', 'my-word-game:daily:2026-11-27'],
-  'gacha-banner.mjs': ['star5: 0.60% → 1.58%', '10-pull:', 'After loading, next pull'],
+  'gacha-banner.mjs': ['star5: 0.60% → 1.58%', 'Nova, featured: 1.05% per pull', '10-pull:', 'the 50/50', 'After loading, next pull'],
   'roguelike-dungeon.mjs': ['@', 'rooms · chest in room 2'],
   'card-game.mjs': ['Turn 1: drew', 'After loading, turn 4 draws'],
   'fair-crits.mjs': ['fairChance(0.25):', 'never more than'],
@@ -30,5 +30,9 @@ describe('examples', () => {
     const after = /After loading, turn 4 draws: (.*)/.exec(cards)?.[1]
     const without = /Without saving, turn 4 draws: (.*)/.exec(cards)?.[1]
     expect(after).toBe(without)
+    const gacha = spawnSync(process.execPath, ['gacha-banner.mjs'], { cwd: dir, encoding: 'utf8' }).stdout
+    const [, next, same] = /After loading, next pull: (\S+) \(the same as without saving: (\S+)\)/.exec(gacha) ?? []
+    expect(next).toBeDefined()
+    expect(next).toBe(same)
   })
 })

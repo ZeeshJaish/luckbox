@@ -4,7 +4,7 @@ export default defineConfig([
   // npm builds: ESM + CommonJS, each with its own type definitions.
   // Add-ons are separate entries so apps only download what they import.
   {
-    entry: { index: 'src/index.ts', noise: 'src/noise.ts', seedrandom: 'src/seedrandom.ts' },
+    entry: { index: 'src/index.ts', noise: 'src/noise.ts', seedrandom: 'src/seedrandom.ts', names: 'src/names.ts' },
     format: ['esm', 'cjs'],
     platform: 'neutral',
     target: 'es2022',

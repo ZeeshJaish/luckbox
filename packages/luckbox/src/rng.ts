@@ -2,6 +2,7 @@ import { Bag, type BagOptions, Deck, type DeckOptions } from './bag.ts'
 import { type DiceRoll, type FaceFn, parseDice, rollDice, rollTotal } from './dice.ts'
 import { LuckboxError, show } from './errors.ts'
 import { FairChance, type FairChanceOptions } from './fair.ts'
+import { Gacha, type GachaOptions, type GachaSpec } from './gacha.ts'
 import { ALGORITHMS, type Algorithm, type Generator, createGenerator, generatorFromKey } from './generators.ts'
 import { type Point, type ScatterOptions, scatter } from './geometry.ts'
 import { type FullLootSpec, LootChest, type LootOptions, type LootSpec, LootTable } from './loot.ts'
@@ -577,6 +578,22 @@ export class Rng {
    */
   scatter(width: number, height: number, spacing: number, options?: ScatterOptions): Point[] {
     return scatter(this, width, height, spacing, options)
+  }
+
+  /**
+   * A gacha banner: rarities with hard and soft pity, rate-up items with the
+   * 50/50 and its guarantee, spark points, and the real odds to publish.
+   * @example
+   * const banner = rng.gacha({
+   *   rates: { star5: 6, star4: 51, star3: 943 },
+   *   pity: { star5: 90, star4: 10 },
+   *   pools: { star5: { featured: ['Nova'], standard: ['Ash', 'Bryn'] } },
+   * })
+   * banner.pullMany(10)
+   * banner.disclosure() // base and real rates, pity and 50/50 rules
+   */
+  gacha<R extends string>(spec: GachaSpec<R>, options?: GachaOptions): Gacha<R> {
+    return new Gacha(this, spec, options)
   }
 
   /**

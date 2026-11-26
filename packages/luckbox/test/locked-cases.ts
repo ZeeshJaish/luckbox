@@ -2,6 +2,7 @@
 // test/locked.json holds the expected values; locked.test.ts checks them.
 import { createHash } from 'node:crypto'
 import { ALGORITHMS, type Seed, luck } from '../src/index.ts'
+import { names } from '../src/names.ts'
 import { createNoise } from '../src/noise.ts'
 import { seedrandom } from '../src/seedrandom.ts'
 
@@ -120,5 +121,27 @@ export function lockedValues(): Record<string, unknown> {
   out.noise = [noise.noise2d(1.5, -2.25), noise.noise3d(0.3, 0.6, 0.9), noise.fbm2d(10.1, 20.2), noise.fbm3d(1, 2, 3, { octaves: 6 })]
   const sr = seedrandom('locked-seedrandom')
   out.seedrandom = [sr(), sr.int32(), sr.quick()]
+
+  // 1.1.0 (locked 2026-11-27)
+  const g = luck('locked-gacha').gacha({
+    rates: { star5: 6, star4: 51, star3: 943 },
+    pity: { star5: 90, star4: 10 },
+    softPity: { star5: { after: 73, add: 0.06 } },
+    pools: {
+      star5: { featured: ['Nova'], standard: ['Ash', 'Bryn', 'Cato'] },
+      star4: { featured: ['Fen', 'Gale'], standard: ['Iris', 'Jax'] },
+      star3: { standard: ['Sword', 'Bow'] },
+    },
+    spark: { cost: 300 },
+  })
+  out.gacha = { pulls: sha256(g.pullMany(500).map((p) => `${p.rarity}:${p.item}:${p.featured}:${p.pity}`)), state: g.state() }
+  const n = luck('locked-names')
+  out.names = {
+    fantasy: names('fantasy').many(n, 5),
+    place: names('place').many(n, 5),
+    planet: names('planet').many(n, 5),
+    tavern: names('tavern').many(n, 3),
+    custom: names(['Haruto', 'Yuto', 'Sota', 'Yuki', 'Hinata', 'Riku', 'Kaito', 'Ren', 'Aoi', 'Yui', 'Hana', 'Sakura']).many(n, 5),
+  }
   return out
 }
